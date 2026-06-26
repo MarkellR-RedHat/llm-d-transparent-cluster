@@ -3,59 +3,249 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Inference Under the Hood: See Every Routing Decision llm-d Makes</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23EE0000' d='M50 10L90 30v40L50 90 10 70V30z'/%3E%3C/svg%3E">
+<title>The Complete Guide to LLM Inference Observability with llm-d</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%233b82f6' d='M50 10L90 30v40L50 90 10 70V30z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap');
-  :root { --rh-red: #EE0000; --rh-red-dark: #CC0000; --rh-black: #151515; --rh-gray-dark: #3C3F42; --rh-gray-mid: #6A6E73; --rh-gray-light: #F5F5F5; --rh-blue: #0066CC; --code-bg: #1E1E2E; --code-text: #CDD6F4; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Red Hat Text', sans-serif; color: var(--rh-black); line-height: 1.7; font-size: 15px; background: #F9F9F9; }
-  .container { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
-  .submission-header { background: linear-gradient(135deg, var(--rh-red-dark), var(--rh-red)); color: white; padding: 32px 40px; border-radius: 12px 12px 0 0; }
-  .submission-header h1 { font-family: 'Red Hat Display', sans-serif; font-weight: 900; font-size: 1.6em; margin-bottom: 4px; }
-  .submission-header .subtitle { opacity: 0.85; font-size: 0.95em; }
-  .meta-card { background: white; border: 1px solid #E0E0E0; border-top: none; border-radius: 0 0 12px 12px; overflow: hidden; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .meta-row { display: flex; border-bottom: 1px solid #EFEFEF; }
+
+  body {
+    font-family: 'Red Hat Text', sans-serif;
+    background: #0a0e17;
+    color: #e2e8f0;
+    line-height: 1.8;
+    font-size: 16px;
+  }
+
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  .meta-card {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .meta-header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid #1e293b;
+  }
+
+  .meta-header h1 {
+    font-family: 'Red Hat Display', sans-serif;
+    font-weight: 900;
+    font-size: 2em;
+    color: #f1f5f9;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .meta-header .subtitle {
+    color: #94a3b8;
+    font-size: 1.05em;
+  }
+
+  .meta-row {
+    display: flex;
+    border-bottom: 1px solid #1e293b;
+  }
+
   .meta-row:last-child { border-bottom: none; }
-  .meta-label { flex: 0 0 220px; padding: 16px 20px; background: #FAFAFA; font-weight: 700; font-size: 0.88em; color: var(--rh-gray-dark); border-right: 1px solid #EFEFEF; }
-  .meta-value { flex: 1; padding: 16px 20px; }
-  .meta-value a { color: var(--rh-blue); text-decoration: none; }
-  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.82em; font-weight: 600; margin-right: 6px; }
-  .badge-green { background: #E6F9E6; color: #1A7A1A; }
-  .badge-blue { background: #E6F0FF; color: #004080; }
-  .badge-red { background: #FFE6E6; color: #CC0000; }
-  .article { background: white; border: 1px solid #E0E0E0; border-radius: 12px; padding: 48px 40px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  .article h2 { font-family: 'Red Hat Display', sans-serif; font-weight: 800; font-size: 1.4em; color: var(--rh-black); margin: 2em 0 0.6em; padding-bottom: 8px; border-bottom: 3px solid var(--rh-red); }
+
+  .meta-label {
+    flex: 0 0 200px;
+    padding: 14px 20px;
+    background: rgba(30, 41, 59, 0.4);
+    font-weight: 700;
+    font-size: 0.85em;
+    color: #94a3b8;
+    border-right: 1px solid #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .meta-value {
+    flex: 1;
+    padding: 14px 20px;
+    color: #e2e8f0;
+  }
+
+  .meta-value a {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+
+  .meta-value a:hover {
+    text-decoration: underline;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+
+  .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+  .badge-green { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+  .badge-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+  .badge-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .badge-published { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+
+  .article {
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 48px 44px;
+    margin-bottom: 32px;
+  }
+
+  .article h2 {
+    font-family: 'Red Hat Display', sans-serif;
+    font-weight: 800;
+    font-size: 1.5em;
+    color: #f1f5f9;
+    margin: 2.2em 0 0.7em;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #3b82f6;
+  }
+
   .article h2:first-child { margin-top: 0; }
-  .article h3 { font-family: 'Red Hat Display', sans-serif; font-weight: 700; font-size: 1.1em; margin: 1.5em 0 0.5em; }
-  .article p { margin: 0 0 1.2em; }
-  .article ul, .article ol { margin: 0 0 1.2em 1.5em; }
-  .article li { margin-bottom: 0.4em; }
-  .article strong { color: var(--rh-black); }
-  .article code { font-family: 'Red Hat Mono', monospace; background: #F0F0F0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-  .article pre { background: var(--code-bg); color: var(--code-text); padding: 20px; border-radius: 8px; overflow-x: auto; margin: 1.2em 0; font-family: 'Red Hat Mono', monospace; font-size: 0.85em; line-height: 1.6; }
-  .article pre code { background: none; padding: 0; color: inherit; }
-  .callout { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 1.5em 0; font-size: 0.92em; }
-  .callout-red { background: #FFF0F0; border-left-color: var(--rh-red); }
-  .stat-box { display: inline-block; background: #F0F4FF; border: 1px solid #D0DCFF; border-radius: 8px; padding: 12px 20px; margin: 4px; text-align: center; }
-  .stat-box .number { font-family: 'Red Hat Display', sans-serif; font-size: 1.8em; font-weight: 900; color: var(--rh-red); }
-  .stat-box .label { font-size: 0.78em; color: var(--rh-gray-mid); margin-top: 2px; }
-  .footer-note { text-align: center; color: var(--rh-gray-mid); font-size: 0.85em; padding: 16px 0 8px; }
-  .hub-link { text-align: center; padding: 24px 0; }
-  .hub-link a { font-family: 'Red Hat Display', sans-serif; font-size: 0.85rem; font-weight: 600; text-decoration: none; margin: 0 12px; }
-  @media (max-width: 700px) { .meta-row { flex-direction: column; } .meta-label { flex: none; border-right: none; border-bottom: 1px solid #EFEFEF; } .article { padding: 28px 20px; } .submission-header { padding: 24px 20px; } }
+
+  .article h3 {
+    font-family: 'Red Hat Display', sans-serif;
+    font-weight: 700;
+    font-size: 1.15em;
+    color: #e2e8f0;
+    margin: 1.6em 0 0.5em;
+  }
+
+  .article p {
+    margin: 0 0 1.3em;
+    color: #e2e8f0;
+  }
+
+  .article ul, .article ol {
+    margin: 0 0 1.3em 1.5em;
+  }
+
+  .article li {
+    margin-bottom: 0.5em;
+    color: #e2e8f0;
+  }
+
+  .article strong {
+    color: #f1f5f9;
+  }
+
+  .article code {
+    font-family: 'Red Hat Mono', monospace;
+    background: #1e293b;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: #e2e8f0;
+  }
+
+  .article pre {
+    background: #0d1117;
+    padding: 22px 24px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.3em 0;
+    font-family: 'Red Hat Mono', monospace;
+    font-size: 0.84em;
+    line-height: 1.65;
+    border: 1px solid #1e293b;
+  }
+
+  .article pre code {
+    background: none;
+    padding: 0;
+    color: #e2e8f0;
+  }
+
+  .callout {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 4px solid #3b82f6;
+    padding: 18px 22px;
+    border-radius: 0 8px 8px 0;
+    margin: 1.6em 0;
+    font-size: 0.93em;
+  }
+
+  .callout strong {
+    color: #60a5fa;
+  }
+
+  .callout-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-left-color: #f59e0b;
+  }
+
+  .callout-warning strong {
+    color: #fbbf24;
+  }
+
+  .footer-note {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.85em;
+    padding: 16px 0 8px;
+  }
+
+  .hub-link {
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .hub-link a {
+    font-family: 'Red Hat Display', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin: 0 16px;
+    color: #3b82f6;
+  }
+
+  .hub-link a:hover {
+    text-decoration: underline;
+  }
+
+  .hub-link a.back-link {
+    color: #94a3b8;
+  }
+
+  @media (max-width: 700px) {
+    .meta-row { flex-direction: column; }
+    .meta-label { flex: none; border-right: none; border-bottom: 1px solid #1e293b; }
+    .article { padding: 28px 20px; }
+    .meta-header { padding: 24px 20px; }
+    .meta-header h1 { font-size: 1.4em; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="submission-header">
-    <h1>Inference Under the Hood: See Every Routing Decision llm-d Makes</h1>
-    <div class="subtitle">A technical deep-dive into cache-aware, health-aware LLM request routing</div>
-  </div>
+
   <div class="meta-card">
+    <div class="meta-header">
+      <h1>The Complete Guide to LLM Inference Observability with llm-d</h1>
+      <div class="subtitle">Prometheus, Grafana, distributed tracing, GPU topology monitoring, and cost observability for production LLM serving</div>
+    </div>
     <div class="meta-row">
       <div class="meta-label">Author</div>
-      <div class="meta-value">Markell Rawls, Developer Advocate, Red Hat</div>
+      <div class="meta-value">Markell Rawls</div>
     </div>
     <div class="meta-row">
       <div class="meta-label">Date</div>
@@ -63,178 +253,434 @@
     </div>
     <div class="meta-row">
       <div class="meta-label">Word Count</div>
-      <div class="meta-value">~1,500 words · 7 min read</div>
+      <div class="meta-value">~3,500 words &middot; 18 min read</div>
     </div>
     <div class="meta-row">
       <div class="meta-label">Tags</div>
       <div class="meta-value">
         <span class="badge badge-red">llm-d</span>
-        <span class="badge badge-blue">EPP</span>
+        <span class="badge badge-blue">Observability</span>
+        <span class="badge badge-green">Prometheus</span>
+        <span class="badge badge-blue">Grafana</span>
+        <span class="badge badge-amber">GPU Monitoring</span>
         <span class="badge badge-green">KV Cache</span>
-        <span class="badge badge-blue">Routing</span>
-        <span class="badge badge-green">Kubernetes</span>
-        <span class="badge badge-blue">Platform Engineering</span>
+        <span class="badge badge-blue">PromQL</span>
+        <span class="badge badge-amber">OpenTelemetry</span>
       </div>
     </div>
     <div class="meta-row">
       <div class="meta-label">Status</div>
-      <div class="meta-value"><span class="badge badge-red">Draft</span></div>
+      <div class="meta-value"><span class="badge badge-published">Published</span></div>
     </div>
     <div class="meta-row">
       <div class="meta-label">Interactive Demo</div>
-      <div class="meta-value"><a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/">Launch Interactive Sandbox →</a></div>
+      <div class="meta-value"><a href="../">Launch Interactive Dashboard &rarr;</a></div>
     </div>
   </div>
+
   <div class="article">
-    <h2>What Happens When You Hit /v1/chat/completions</h2>
 
-    <p>When a request arrives at your llm-d cluster, it doesn't get dumped onto a random GPU. Unlike traditional API proxies that treat all backends identically, llm-d runs an intelligent routing layer that makes real-time decisions based on cache state, pod health, and current load.</p>
+    <h2>Why LLM Inference Needs Specialized Observability</h2>
 
-    <p>Here's the journey every request takes:</p>
+    <p>If you have operated a Kubernetes cluster for any length of time, you already know the standard monitoring playbook: CPU utilization, memory consumption, pod restart counts, network throughput, and HTTP error rates. These metrics serve traditional microservices well. A request arrives, consumes some CPU and memory, touches a database, and returns a result within a few milliseconds. When something goes wrong, CPU spikes or memory leaks or error rates climb, and your dashboards tell you exactly where to look. This playbook is well-established, battle-tested, and catastrophically insufficient for LLM inference workloads.</p>
 
-    <ol>
-      <li><strong>Gateway API</strong> receives the HTTPS request at your cluster's edge</li>
-      <li><strong>EPP (Endpoint Picker Policy)</strong> scores every healthy pod based on four factors</li>
-      <li><strong>The winning pod</strong> handles the request, leveraging its KV cache if possible</li>
-    </ol>
+    <p>The fundamental problem is that standard Kubernetes monitoring was designed for stateless request-response services. LLM inference operates on an entirely different computational model. A single inference request can consume gigabytes of GPU memory, run for seconds or minutes, and involve complex internal state management that has no analog in traditional web services. The failure modes are correspondingly alien to anyone accustomed to cloud-native operations, and the metrics that matter are ones that Kubernetes does not even know exist.</p>
 
-    <p>Each layer has a specific job. The Gateway handles authentication and rate limiting. The EPP handles routing intelligence. The vLLM pods handle inference. No single component tries to do everything.</p>
+    <p>Consider the most deceptive metric in GPU computing: utilization. Your DCGM exporter might report 92% GPU utilization across all pods, and your instinct tells you everything is running smoothly. But behind that number, every single request might be performing cold prefill computations because your KV cache hit rate has collapsed. Users are experiencing five-second time-to-first-token latencies while your dashboards show green across the board. The GPU is busy. It is just busy doing redundant work that a properly functioning cache would have eliminated entirely.</p>
 
-    <h2>The Gateway: Your Cluster's Front Door</h2>
+    <p>LLM inference introduces failure modes that have no analog in traditional service architectures. KV cache eviction storms occur when memory pressure forces the eviction of cached key-value pairs, which triggers a devastating cascade: subsequent requests that would have been cache hits now become cold prefills, consuming more GPU compute, which increases memory pressure further, which triggers more evictions. This positive feedback loop can take a healthy cluster from sub-100ms TTFT to multi-second TTFT in under a minute, and standard monitoring will not register anything unusual until users start filing complaints.</p>
 
-    <p>The Gateway API is your cluster's entry point. It's based on the <strong>Kubernetes Gateway API</strong> standard, which means you're not locked into proprietary infrastructure. TLS termination, rate limiting, and authentication all happen here before the request reaches the routing layer.</p>
-
-    <p>The Gateway uses an <code>HTTPRoute</code> with custom backend references pointing to the EPP. This is where llm-d diverges from traditional load balancers: instead of round-robin or least-connections, the Gateway delegates routing decisions to a policy-driven component that understands LLM workloads.</p>
+    <p>Adapter swap thrashing is another uniquely LLM failure mode. When you serve multiple LoRA adapters on the same base model, the system needs to load and unload adapter weights as requests arrive for different fine-tuned variants. If your routing layer is not adapter-aware, you can end up in a situation where every request triggers an adapter swap, turning what should be a few milliseconds of overhead into a constant drag on throughput. Prefill/decode imbalance is yet another invisible killer: if too many requests are in the compute-intensive prefill phase simultaneously, the decode throughput for in-flight requests collapses because prefill operations consume disproportionate GPU compute and memory bandwidth. Head-of-line blocking in continuous batching systems adds still another layer of complexity. vLLM uses continuous batching to process multiple requests simultaneously, but a single request with a massive context window can monopolize the attention computation and starve shorter requests of GPU cycles. Without metrics that distinguish between prefill and decode phases, between cache hits and cache misses, between adapter loads and steady-state inference, you are operating blind in a system that fails in ways your existing monitoring was never designed to detect.</p>
 
     <div class="callout">
-      <strong>Key Point:</strong> The Gateway doesn't decide which pod gets the request. It enforces security and compliance, then hands the routing decision to the EPP.
+      <strong>Key Insight:</strong> GPU utilization is not a proxy for inference quality. A cluster can show 95% GPU utilization while delivering terrible user experience because all that compute is spent on redundant prefill operations that proper cache-aware routing would have eliminated.
     </div>
 
-    <h2>The EPP: The Brain Behind Every Routing Decision</h2>
+    <h2>The Key Metrics That Matter</h2>
 
-    <p>EPP stands for <strong>Endpoint Picker Policy</strong>. It's the component that makes llm-d intelligent. The EPP maintains a real-time model of every pod in your cluster: which prompts they've cached, how many requests they're handling, how deep their queues are, and whether they're healthy.</p>
+    <p>Effective LLM inference monitoring requires a fundamentally different set of metrics than traditional service monitoring. The metrics that matter are those that capture the unique computational characteristics of autoregressive token generation, KV cache behavior, and GPU memory management. There are six core metrics that tell you almost everything you need to know about system health and user experience.</p>
 
-    <p>When a request arrives, the EPP scores every candidate pod using four factors:</p>
+    <h3>Time-to-First-Token (TTFT)</h3>
 
-    <ol>
-      <li><strong>Prefix cache match length</strong> — How many tokens of the incoming request are already cached on this pod (highest weight)</li>
-      <li><strong>Pod load</strong> — <code>num_requests_running / capacity</code></li>
-      <li><strong>Queue depth</strong> — <code>num_requests_waiting</code></li>
-      <li><strong>Health status</strong> — Is the pod healthy, degraded, or failing</li>
-    </ol>
+    <p>TTFT measures the elapsed time from when a request arrives at the inference server to when the first token of the response is generated. This metric directly reflects the prefill latency, which is the dominant cost in LLM inference for long-context requests. TTFT is the metric that users feel most acutely: it is the pause between pressing send and seeing the model begin to respond. In a streaming interface, it is the silence before the first word appears. You need to track TTFT at multiple percentiles: p50 gives you the typical user experience, p95 reveals the tail latency that affects one in twenty users, and p99 exposes the worst-case behavior that drives user complaints and SLA violations. A healthy cluster serving Llama 3.1 70B should target p50 TTFT under 500ms and p99 TTFT under 3 seconds for typical prompt lengths. When p99 TTFT exceeds 5 seconds, something is wrong. When it exceeds 10 seconds, your users are actively churning. A cache hit can reduce TTFT from seconds to milliseconds, which is why cache-aware routing is the single most impactful optimization in the entire stack.</p>
 
-    <h3>A Concrete Scoring Example</h3>
+    <h3>Inter-Token Latency (ITL)</h3>
 
-    <p>Let's say you have three pods and a request comes in with a 32K-token context. Here's how the EPP might score them:</p>
+    <p>ITL measures the time between consecutive tokens during the decode phase. While TTFT captures the initial wait, ITL determines the perceived streaming speed. Users are surprisingly sensitive to ITL variation: consistent 30ms ITL feels smooth and natural, while variable ITL that oscillates between 10ms and 200ms feels stuttery and broken even if the average is identical. ITL spikes typically indicate contention in the decode phase, often caused by new prefill operations being scheduled into the continuous batch, by GPU memory bandwidth saturation, or by thermal throttling. Track ITL at p50 and p99, and alert on p99 ITL exceeding 100ms. The distinction between TTFT and ITL matters because they have different root causes and different remediation strategies: TTFT problems are usually cache or queue related, while ITL problems are usually contention or hardware related.</p>
+
+    <h3>Throughput: Tokens per Second</h3>
+
+    <p>Throughput needs to be decomposed into prefill throughput and decode throughput, because they compete for different GPU resources and have different scaling characteristics. Prefill throughput is compute-bound and benefits from tensor parallelism and larger batch sizes. Decode throughput is memory-bandwidth-bound and benefits from higher batch sizes but is constrained by the autoregressive nature of generation. Aggregate tokens-per-second is useful for capacity planning and cost calculations, but the prefill/decode decomposition is essential for diagnosing performance issues. A sudden drop in decode throughput while prefill throughput remains constant is a strong signal that too many requests are entering the prefill phase simultaneously and starving the decode pipeline.</p>
+
+    <h3>KV Cache Hit Ratio</h3>
+
+    <p>This is arguably the single most important metric for an llm-d cluster. The KV cache hit ratio measures the fraction of incoming request tokens that are served from cached key-value pairs rather than computed from scratch during prefill. In a well-tuned cluster with cache-aware routing, you should see hit ratios above 60% for workloads with prompt reuse, such as chatbots using system prompts, RAG applications with repeated document contexts, or code completion with shared file contexts. A hit ratio below 40% means your routing layer is not effectively directing requests to pods that have cached their prefix, and you are paying a massive latency and compute tax for redundant prefill operations. Investigate whether the EPP cache affinity weight is too low, whether your cache size is too small and causing premature evictions, or whether your traffic genuinely lacks prefix overlap.</p>
+
+    <h3>Queue Depth and GPU Memory Pressure</h3>
+
+    <p>Queue depth measures how many requests are waiting to be processed at each inference pod. In continuous batching systems, a small non-zero queue is normal and healthy, but persistent queue depths above 20-30 indicate that your cluster is under-provisioned or that a few pods are hoarding traffic due to routing imbalances. Watch for queue depth asymmetry across pods: if one pod has a queue of 60 while others sit at 2, your load balancing is misconfigured. GPU memory utilization needs to be tracked separately from GPU compute utilization, because they have different failure thresholds and different remediation paths. Memory pressure above 90% triggers KV cache evictions, which degrades cache hit ratios, which increases compute demand, which increases memory pressure further. This is the eviction storm feedback loop, and catching it early requires alerting on GPU memory utilization well before it reaches the critical threshold where evictions begin cascading.</p>
+
+    <div class="callout-warning callout">
+      <strong>Warning:</strong> Do not confuse GPU compute utilization with GPU memory utilization. You can have 50% compute utilization and 95% memory utilization, which means you are one large-context request away from triggering KV cache evictions and a latency cascade.
+    </div>
+
+    <h2>Building a Monitoring Stack</h2>
+
+    <p>The foundation of LLM inference observability is Prometheus for metrics collection and Grafana for visualization. vLLM exposes a comprehensive metrics endpoint at <code>/metrics</code> that provides Prometheus-formatted metrics covering request latencies, token throughput, cache statistics, and internal queue state. The monitoring stack architecture is straightforward: each vLLM pod exposes metrics on a configurable port, Prometheus scrapes them on a regular interval, and Grafana dashboards query Prometheus to render real-time and historical views of cluster behavior. You do not need to instrument anything yourself because vLLM provides all the metrics out of the box.</p>
+
+    <p>The first step is configuring Prometheus to discover and scrape your vLLM pods. If you are running on Kubernetes with the Prometheus Operator, the cleanest approach is to use a <code>ServiceMonitor</code> resource that automatically discovers pods based on label selectors. This eliminates the need to manually maintain scrape target lists as pods scale up and down, which is critical in environments where horizontal pod autoscaling is active.</p>
+
+    <pre><code># ServiceMonitor for vLLM inference pods
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-inference-monitor
+  namespace: llm-d
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: vllm-inference
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - llm-d</code></pre>
+
+    <p>If you are not using the Prometheus Operator, you can configure static scrape targets or use Kubernetes service discovery directly in your Prometheus configuration file. The key parameters are the scrape interval, which should be 15 seconds for production LLM workloads to capture rapid changes in cache state and queue depth, and the scrape timeout, which should be set to 10 seconds to avoid marking healthy but busy pods as unresponsive during heavy inference loads.</p>
+
+    <pre><code># prometheus.yml scrape config for vLLM pods
+scrape_configs:
+  - job_name: 'vllm-inference'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - llm-d
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        regex: vllm-inference
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: (.+)
+        replacement: ${1}:8000
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_model]
+        target_label: model</code></pre>
+
+    <p>Dashboard organization matters more than people realize. A common mistake is building a single monolithic dashboard with fifty panels that no one can parse during an incident. Instead, organize your dashboards into a clear hierarchy: a top-level overview dashboard that shows cluster-wide health at a glance, a pod-level dashboard that shows detailed metrics for individual inference servers, a cache dashboard focused on KV cache behavior and routing effectiveness, and a cost dashboard that tracks GPU utilization efficiency and cost-per-token. Each dashboard should answer a specific question. The overview dashboard answers "is the cluster healthy right now?" The pod dashboard answers "why is this specific pod underperforming?" The cache dashboard answers "is our routing layer doing its job?" This separation keeps each dashboard focused and scannable rather than overwhelming operators with an undifferentiated wall of charts during a high-stress incident.</p>
+
+    <h2>PromQL Queries for Critical Dashboards</h2>
+
+    <p>The power of Prometheus lies in PromQL, its query language. For LLM inference monitoring, you need queries that go beyond simple rate calculations to capture the nuanced behavior of autoregressive generation, cache dynamics, and multi-model serving. Here are the essential queries for every llm-d production dashboard, with explanations of what each measures and how to use it effectively in Grafana panels.</p>
+
+    <h3>TTFT Percentiles</h3>
+
+    <p>The most critical query in your entire monitoring stack tracks time-to-first-token at the 99th percentile. This single number tells you more about user experience than any other metric in your system.</p>
+
+    <pre><code># P99 Time-to-First-Token
+histogram_quantile(0.99,
+  rate(vllm_request_ttft_seconds_bucket[5m])
+)
+
+# P95 and P50 for comparison
+histogram_quantile(0.95, rate(vllm_request_ttft_seconds_bucket[5m]))
+histogram_quantile(0.50, rate(vllm_request_ttft_seconds_bucket[5m]))</code></pre>
+
+    <p>Display p50, p95, and p99 on the same Grafana panel as overlaid time series. When p99 diverges significantly from p50, it indicates that most requests are fast but a subset is hitting a pathological code path, typically cold prefill on cache misses or extended queue wait times due to contention.</p>
+
+    <h3>Token Throughput</h3>
+
+    <pre><code># Aggregate token generation rate across all pods
+sum(rate(vllm_tokens_generated_total[1m]))
+
+# Per-pod token throughput for identifying stragglers
+rate(vllm_tokens_generated_total[1m])</code></pre>
+
+    <p>Display the per-pod query as a stacked area chart to visualize how throughput is distributed. If one pod is consistently generating fewer tokens than its peers, it may have a hardware issue, a cache problem, or a routing imbalance that is directing disproportionate traffic elsewhere.</p>
+
+    <h3>KV Cache Hit Rate</h3>
+
+    <pre><code># Cache hit ratio (percentage of prefix tokens served from cache)
+sum(rate(vllm_cache_hits_total[5m])) /
+(sum(rate(vllm_cache_hits_total[5m])) + sum(rate(vllm_cache_misses_total[5m])))
+* 100</code></pre>
+
+    <p>Format this as a percentage in Grafana and set color thresholds: green above 60%, yellow between 40% and 60%, red below 40%. This single panel tells you whether the EPP's cache-aware routing is delivering value or whether requests are being scattered across pods without regard for cache affinity.</p>
+
+    <h3>GPU Memory, Queue Depth, Request Rate, and Error Rate</h3>
+
+    <pre><code># GPU memory utilization per pod (via DCGM exporter)
+DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100
+
+# Queue depth across all pods
+sum(vllm_num_requests_waiting)
+
+# Request rate by model (for multi-model deployments)
+sum by (model) (rate(vllm_request_total[5m]))
+
+# Error rate (5xx and OOM)
+sum(rate(vllm_request_errors_total[5m])) /
+sum(rate(vllm_request_total[5m])) * 100</code></pre>
+
+    <p>These queries form the backbone of your operational dashboards. Each one answers a specific question: Are users waiting too long? Are we generating tokens fast enough? Is the cache working? Are GPUs running out of memory? Are requests piling up? Which models are getting the most traffic? Are we returning errors? Layer these queries into Grafana panels with appropriate color-coded thresholds and you have a monitoring stack that exposes the true health of your LLM inference cluster rather than the misleading picture painted by generic Kubernetes metrics.</p>
+
+    <h2>Alerting Strategy</h2>
+
+    <p>Not everything that belongs on a dashboard deserves an alert. Alert fatigue is the fastest way to ensure that real incidents get ignored because operators have been conditioned to dismiss notifications as noise. The distinction is simple: dashboards are for exploration and context during investigation, alerts are for situations that require human intervention within a defined time window. If a metric being out of range does not require someone to take action, it belongs on a dashboard panel, not in an alerting rule.</p>
+
+    <p>For LLM inference workloads, there is a clear hierarchy of alertable conditions. The thresholds below are calibrated for production llm-d deployments serving 70B-parameter models on A100 or H100 GPUs. Adjust them based on your specific model size, hardware generation, and SLA requirements.</p>
+
+    <h3>Warning-Level Alerts</h3>
 
     <ul>
-      <li><strong>Pod A:</strong> 28K tokens cached, 2/8 requests running, 1 queued, healthy → <strong>Score: 950</strong></li>
-      <li><strong>Pod B:</strong> 0 tokens cached, 1/8 requests running, 0 queued, healthy → <strong>Score: 400</strong></li>
-      <li><strong>Pod C:</strong> 15K tokens cached, 4/8 requests running, 3 queued, healthy → <strong>Score: 620</strong></li>
+      <li><strong>TTFT p99 above 5 seconds</strong> sustained for 5 minutes. This indicates emerging latency problems, typically declining cache hit rates or increasing queue depth. Investigate promptly but do not necessarily page anyone at 3am.</li>
+      <li><strong>KV cache hit ratio below 40%</strong> sustained for 10 minutes. Your routing layer may not be directing requests to pods with cached prefixes effectively. Check EPP scoring weights and pod traffic distribution.</li>
+      <li><strong>GPU memory utilization above 90%</strong> sustained for 5 minutes. You are approaching the threshold where KV cache evictions begin cascading. Consider scaling horizontally or tuning your cache eviction policy before the situation degrades further.</li>
+      <li><strong>Error rate above 1%</strong> sustained for 5 minutes. Occasional errors are expected in any distributed system, but sustained errors above one percent indicate a systemic issue that requires investigation.</li>
     </ul>
 
-    <p>Pod A wins. Even though it's handling more requests than Pod B, the 28K-token cache match is worth far more than the slight load difference. The request goes to Pod A, which skips prefilling those 28K tokens and jumps straight to generating the response.</p>
-
-    <div class="callout callout-red">
-      <strong>Why cache match is weighted highest:</strong> Avoiding redundant prefill is the single biggest latency win in LLM inference. A cache hit can reduce time-to-first-token by 40-50x.
-    </div>
-
-    <h2>KV Cache: The Hidden Accelerator</h2>
-
-    <p>To understand why prefix caching matters so much, you need to know what a KV cache is.</p>
-
-    <p>During the attention mechanism in a transformer model, the model computes <strong>key-value pairs</strong> for every token in the context. These pairs represent "what this token pays attention to" and are expensive to compute — but once computed, they can be reused if the same prefix appears in a future request.</p>
-
-    <p>vLLM implements <strong>automatic prefix caching</strong>. When a request comes in, vLLM checks if any prefix of the prompt matches something it's already processed. If there's a match, it reuses the cached KV pairs and only computes new ones for the novel portion of the prompt.</p>
-
-    <p>Think of it as a lookup table for work already done. If you've already processed "Summarize this legal document: [30K tokens of contract]", and a new request comes in with the same contract plus "focusing on liability clauses", you only pay the cost of computing the new suffix.</p>
-
-    <div style="text-align: center; margin: 1.5em 0;">
-      <div class="stat-box">
-        <div class="number">3.7s</div>
-        <div class="label">Cold prefill (32K tokens)</div>
-      </div>
-      <div class="stat-box">
-        <div class="number">0.08s</div>
-        <div class="label">Cached prefill (32K tokens)</div>
-      </div>
-      <div class="stat-box">
-        <div class="number">47.5x</div>
-        <div class="label">Improvement</div>
-      </div>
-    </div>
-
-    <p>These numbers are from real vLLM benchmarks on Llama 3.1 70B. The difference between a cache hit and a cache miss is the difference between sub-100ms latency and multi-second latency.</p>
-
-    <h2>Health-Aware Failover: When Things Go Wrong</h2>
-
-    <p>Pods fail. GPUs run out of memory. Networks flake. llm-d is designed to route around failures gracefully.</p>
-
-    <p>The EPP continuously monitors pod health using Kubernetes liveness and readiness probes. Each pod reports its status:</p>
+    <h3>Critical-Level Alerts</h3>
 
     <ul>
-      <li><strong>Green:</strong> Healthy, accepting requests</li>
-      <li><strong>Amber:</strong> Degraded (high load, slow responses), but still alive</li>
-      <li><strong>Red:</strong> Unhealthy (probe failures, OOM events, GPU errors)</li>
+      <li><strong>TTFT p99 above 10 seconds</strong> sustained for 3 minutes. Users are having a terrible experience and this is an active incident requiring immediate response.</li>
+      <li><strong>Queue depth above 50</strong> sustained for 5 minutes. The cluster cannot keep up with incoming request volume. Scale immediately or activate load shedding.</li>
+      <li><strong>Pod restarts above 3</strong> within a 15-minute window. Something is causing pods to crash-loop, most likely OOM kills from GPU memory exhaustion or a misconfigured model configuration.</li>
     </ul>
 
-    <p>When a pod transitions to red, the EPP immediately removes it from the candidate pool. In-flight requests may be retried on healthy pods if the failure is detected early enough. The KV cache on the failed pod is lost, but the EPP knows this and won't route subsequent requests there until the pod recovers.</p>
+    <pre><code># PrometheusRule for llm-d alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: llm-d-inference-alerts
+  namespace: llm-d
+spec:
+  groups:
+    - name: llm-d.latency
+      rules:
+        - alert: HighTTFTWarning
+          expr: |
+            histogram_quantile(0.99,
+              rate(vllm_request_ttft_seconds_bucket[5m])
+            ) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "TTFT p99 exceeds 5s"
+            description: "P99 time-to-first-token is {{ $value | humanizeDuration }}"
+        - alert: HighTTFTCritical
+          expr: |
+            histogram_quantile(0.99,
+              rate(vllm_request_ttft_seconds_bucket[5m])
+            ) > 10
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: "TTFT p99 exceeds 10s - active incident"
+            description: "P99 TTFT at {{ $value | humanizeDuration }}. Users severely impacted."
+    - name: llm-d.cache
+      rules:
+        - alert: LowCacheHitRate
+          expr: |
+            (sum(rate(vllm_cache_hits_total[5m])) /
+            (sum(rate(vllm_cache_hits_total[5m])) +
+             sum(rate(vllm_cache_misses_total[5m])))) * 100 < 40
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "KV cache hit rate below 40%"
+            description: "Cache hit ratio is {{ $value }}%. Check EPP routing."
+    - name: llm-d.resources
+      rules:
+        - alert: GPUMemoryPressure
+          expr: DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100 > 90
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "GPU memory utilization above 90%"
+        - alert: HighQueueDepth
+          expr: sum(vllm_num_requests_waiting) > 50
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Inference queue depth exceeds 50"
+        - alert: PodCrashLoop
+          expr: |
+            increase(kube_pod_container_status_restarts_total{
+              namespace="llm-d"
+            }[15m]) > 3
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Inference pod restarting repeatedly"
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(vllm_request_errors_total[5m])) /
+            sum(rate(vllm_request_total[5m])) * 100 > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Request error rate above 1%"</code></pre>
 
-    <p>Graceful degradation happens at the amber stage. A pod under heavy load gets a lower score, so new requests flow to healthier pods. This prevents a single pod from becoming a hotspot and cascading into full failure.</p>
+    <p>To avoid alert fatigue, use inhibition rules to suppress warning-level alerts when a critical alert is already firing for the same component. If <code>HighTTFTCritical</code> is active, there is no value in also firing <code>HighTTFTWarning</code> or <code>LowCacheHitRate</code>. Group related alerts so that a single notification contains all the context an operator needs to diagnose the issue. And always include a runbook link in the alert annotations that explains not just what the alert means but what specific steps to take in response. An alert without a runbook is just noise that erodes operator confidence in the monitoring system.</p>
+
+    <h2>Distributed Tracing for Inference</h2>
+
+    <p>Metrics tell you that something is wrong. Traces tell you where it went wrong and why. For llm-d, distributed tracing is essential because a single inference request traverses multiple components, each with its own latency contribution and failure modes. Understanding the full request lifecycle requires end-to-end traces that correlate events across the Gateway, EPP, and vLLM inference pods into a single coherent narrative.</p>
+
+    <p>The request journey through an llm-d cluster has seven distinct stages, and each stage should be represented as a span in your distributed trace. The first span captures the <strong>Gateway</strong>, where TLS termination, authentication, rate limiting, and request validation occur. This typically contributes 1-5ms of latency, but misconfigured rate limiters or certificate validation issues can inflate it dramatically. The second span covers <strong>EPP scoring</strong>, where the Endpoint Picker Policy evaluates every candidate pod based on cache state, load, queue depth, and health status. This is usually sub-millisecond but becomes significant when the candidate pool is large or the scoring function involves complex cache lookup operations. The third span captures <strong>pod selection and request forwarding</strong>, including any network latency between the EPP and the selected inference pod.</p>
+
+    <p>The fourth span is where most of the latency lives: <strong>prefill computation</strong>. This span should be annotated with the number of input tokens, the number of tokens served from the KV cache, and the number of tokens that required fresh computation from scratch. This annotation is critical because it lets you distinguish between "this request was slow because it had a 50K-token context" and "this request was slow because it missed the cache and had to recompute 50K tokens that should have been cached." The fifth span covers <strong>KV cache transfer</strong>, which is relevant when llm-d performs disaggregated prefill/decode and transfers KV cache state between specialized prefill pods and decode pods over NVLink or RDMA. The sixth span covers the <strong>decode phase</strong>, where tokens are generated autoregressively one at a time. The seventh span captures <strong>response streaming</strong> back through the Gateway to the client.</p>
+
+    <p>OpenTelemetry is the industry standard for instrumentation. vLLM supports OpenTelemetry natively, and the llm-d control plane components can be instrumented using the OpenTelemetry SDKs for Go and Python. The key configuration requirement is ensuring that trace context is propagated across component boundaries using W3C Trace Context headers, which allows a single trace to span the entire request lifecycle from Gateway ingress to client response.</p>
+
+    <pre><code># OpenTelemetry Collector config for llm-d tracing
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  attributes:
+    actions:
+      - key: deployment.environment
+        value: production
+        action: upsert
+
+exporters:
+  jaeger:
+    endpoint: jaeger-collector.observability:14250
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, attributes]
+      exporters: [jaeger]</code></pre>
+
+    <p>The real power of tracing emerges when you correlate traces with metrics. A TTFT spike on your Grafana dashboard becomes immediately actionable when you can click through to the specific traces that contributed to the p99 and see that they all missed the cache on a specific pod, or that they all spent 3 seconds waiting in the EPP queue because a pod health check was returning stale data. This correlation between aggregate metrics and individual request traces is what transforms monitoring from "something is wrong somewhere" to "here is exactly what went wrong, on which component, and why."</p>
+
+    <h2>GPU Topology Monitoring</h2>
+
+    <p>Modern GPU servers are not homogeneous compute pools. The physical interconnect topology between GPUs dramatically affects inference performance, and llm-d's scheduler is topology-aware for good reason. Understanding and monitoring GPU topology is essential for diagnosing performance anomalies that have no obvious cause at the application layer and that standard Kubernetes metrics cannot even represent.</p>
+
+    <p>The critical distinction is between NVLink and PCIe interconnects. NVLink provides over 600 GB/s of bidirectional bandwidth between directly connected GPUs on the same NVLink domain, while PCIe Gen5 x16 provides approximately 32 GB/s. That is nearly a 20x difference in communication bandwidth. When tensor parallelism is used to split a large model across multiple GPUs, the all-reduce operations that synchronize intermediate activations between GPUs are extremely bandwidth-intensive. If those GPUs are connected via NVLink, the communication overhead is negligible relative to the computation time. If they are connected via PCIe because the scheduler placed tensor-parallel shards on GPUs in different NVLink domains, the communication overhead can dominate the computation time entirely, especially for smaller batch sizes where the compute-to-communication ratio is already unfavorable.</p>
+
+    <p>NUMA (Non-Uniform Memory Access) topology adds another dimension of complexity. On multi-socket servers, GPUs are physically attached to specific CPU sockets via PCIe root complexes, and accessing GPU memory or performing DMA transfers from the wrong NUMA node incurs additional latency due to inter-socket communication over UPI or Infinity Fabric. llm-d's scheduler should place tensor-parallel groups on GPUs that share the same NVLink domain and the same NUMA node. Monitoring confirms that this placement is correct and alerts when topology violations occur, for example when a pod restart causes Kubernetes to reschedule a pod onto a node where the available GPU is not NVLink-connected to its tensor-parallel peers.</p>
+
+    <p>The DCGM (Data Center GPU Manager) exporter is the standard tool for exposing GPU-level metrics to Prometheus. Beyond the basic utilization and memory metrics, DCGM exposes NVLink-specific counters that are invaluable for topology monitoring and hardware health assessment.</p>
+
+    <pre><code># Key DCGM metrics for topology monitoring
+DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL       # NVLink aggregate throughput
+DCGM_FI_DEV_NVLINK_CRC_FLIT_ERROR_COUNT  # NVLink CRC flit errors
+DCGM_FI_DEV_NVLINK_CRC_DATA_ERROR_COUNT  # NVLink CRC data errors
+DCGM_FI_DEV_NVLINK_REPLAY_ERROR_COUNT    # NVLink replay errors
+DCGM_FI_DEV_PCIE_TX_THROUGHPUT           # PCIe transmit throughput
+DCGM_FI_DEV_PCIE_RX_THROUGHPUT           # PCIe receive throughput</code></pre>
+
+    <p>NVLink errors deserve special and immediate attention. A rising count of CRC errors or replay errors on an NVLink connection can indicate a failing GPU, a loose physical connection in the NVLink bridge, or thermal issues causing signal integrity degradation. These errors cause retransmissions that reduce effective bandwidth and increase latency jitter in ways that are nearly impossible to diagnose from application-level metrics alone. Left unmonitored, a degrading NVLink connection can cause intermittent latency spikes that appear random at the application layer but have a clear hardware root cause. Alert on any non-zero rate of NVLink errors and investigate immediately. Hardware issues do not fix themselves, and they invariably get worse over time until the link fails entirely.</p>
+
+    <p>llm-d uses topology information actively for scheduling decisions. When placing a new model replica, the scheduler prefers GPU groups that are fully connected via NVLink within the same domain. When performing KV cache transfers for disaggregated prefill/decode architectures, the scheduler prefers transfer paths that traverse NVLink rather than PCIe to minimize transfer latency. Monitoring these scheduling decisions and correlating them with observed inference latency validates that topology-aware scheduling is actually delivering the expected performance benefits rather than just adding complexity.</p>
+
+    <h2>Cost Observability</h2>
+
+    <p>GPUs are the most expensive resource in your infrastructure stack. An H100 SXM instance costs roughly $30-40 per hour on major cloud providers, and when you are running a cluster of eight or sixteen of these machines, every single percentage point of utilization efficiency translates directly to thousands of dollars per month in savings or waste. Cost observability is not a nice-to-have feature for mature organizations. It is the metric layer that determines whether your LLM serving infrastructure is financially sustainable at scale or whether you are hemorrhaging money on underutilized hardware.</p>
+
+    <p>The fundamental cost metric for LLM inference is cost-per-token. The calculation is straightforward in principle: take your total GPU cost per hour, divide by the number of tokens generated per hour, and you get the marginal cost of producing each token. This number should be tracked continuously and broken down by model, by LoRA adapter, and by request type to identify where your GPU dollars are going and where they are being wasted.</p>
+
+    <pre><code># Cost-per-million-tokens calculation
+# Assume $35/hr per H100 GPU, 8 GPUs in cluster
+# GPU cost per second
+gpu_cost_per_second = 8 * 35 / 3600  # $0.0778/second
+
+# Tokens generated per second (from Prometheus)
+# sum(rate(vllm_tokens_generated_total[5m]))
+# Example: 2,400 tokens/second
+
+# Cost per million tokens
+# ($0.0778 / 2400) * 1,000,000 = $32.41 per million tokens</code></pre>
+
+    <p>The transformative impact of cache-aware routing, and the core economic argument for llm-d's existence, becomes quantifiable through cost observability. When a request hits the KV cache, it skips the prefill phase entirely. Prefill is the most compute-intensive part of inference, often consuming 10-50x more GPU cycles per token than the decode phase. By routing requests to pods that have already cached their prefix, llm-d eliminates redundant prefill computation, which directly reduces the number of GPU-seconds consumed per request, which directly reduces cost-per-token.</p>
+
+    <p>A practical example makes the magnitude clear: consider a RAG application that prepends a 10,000-token document context to every user query. Without cache-aware routing, every request pays the full prefill cost for those 10,000 document tokens regardless of which pod handles the request. With llm-d routing requests to pods that have already cached the document context, only the user query portion, perhaps 50-200 tokens, needs fresh prefill computation. That is a 98% reduction in prefill compute for the repeated prefix portion of each request. At scale, across thousands of requests per hour, this translates to running the same workload on 30-40% fewer GPUs, or equivalently, serving 50-70% more traffic on the same hardware footprint without any degradation in latency or quality.</p>
+
+    <p>Your cost dashboard should track three core dimensions. First, the raw cost per million tokens over time, decomposed by model and adapter. This is your unit economics and the number your finance team cares about. Second, the estimated cost savings from cache hits, calculated by comparing actual prefill tokens computed against the total tokens that would have required prefill without caching. This quantifies the dollar value of your routing intelligence. Third, GPU utilization efficiency, which is the ratio of time GPUs spend doing useful inference work versus time spent idle, in overhead, or performing redundant computation that caching should have eliminated. A well-optimized llm-d cluster should achieve 70-80% utilization efficiency. Below 50% means you are paying for GPU time that is not producing tokens, and you should investigate whether the bottleneck is scheduling inefficiency, memory management overhead, or simply insufficient request volume to keep the hardware busy.</p>
 
     <div class="callout">
-      <strong>Operational Benefit:</strong> You can watch health transitions in real-time using the interactive sandbox. This is observable infrastructure — no more black-box load balancers where you guess why requests are slow.
+      <strong>Cost Impact:</strong> In production llm-d deployments with high prompt reuse patterns, cache-aware routing typically reduces cost-per-token by 30-50% compared to naive round-robin load balancing. For a cluster spending $100K/month on GPU compute, that represents $30K-$50K in monthly savings from routing intelligence alone.
     </div>
 
-    <h2>Seeing It All in Action</h2>
+    <h2>Production Dashboard Design Patterns</h2>
 
-    <p>The <a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/">interactive sandbox</a> lets you see every routing decision llm-d makes. You can watch requests flow through the Gateway, see the EPP score each pod, and observe how cache state influences routing.</p>
+    <p>Building dashboards is easy. Building dashboards that people actually look at during a 2am incident and can parse in seconds under stress is a fundamentally different challenge. The difference lies in applying established design patterns that account for how humans process visual information when they are tired, stressed, and under time pressure. When your cluster is actively degrading and users are complaining, the on-call engineer needs to understand the situation in seconds, not minutes spent scrolling through fifty undifferentiated panels.</p>
 
-    <p>Each scenario demonstrates a different aspect of llm-d's routing intelligence:</p>
+    <h3>The Four Golden Signals for LLM Inference</h3>
 
-    <ul>
-      <li><strong>Cached vs. Cold Start:</strong> Send the same prompt twice and watch the second request route to the pod that cached it</li>
-      <li><strong>Load Balancing:</strong> Fire a burst of traffic and see how the EPP distributes load across healthy pods</li>
-      <li><strong>Failover:</strong> Kill a pod mid-request and watch the EPP route new traffic around it</li>
-      <li><strong>Cache Drift:</strong> Send divergent prompts and observe how cache affinity breaks down when contexts no longer overlap</li>
-    </ul>
-
-    <p>The sandbox is fully client-side — no backend, no API keys, no telemetry. It's a pedagogical tool, not a sales demo. Try the burst traffic scenario to see load balancing in action, or the failover scenario to watch health-aware routing respond to pod failures.</p>
-
-    <h2>What This Means for Platform Engineers</h2>
-
-    <p>If you're running LLM inference at scale, llm-d changes the economics:</p>
+    <p>Google's Four Golden Signals framework, consisting of latency, traffic, errors, and saturation, adapts naturally to LLM inference, but the specific metrics that represent each signal are fundamentally different from traditional web services and must be carefully selected.</p>
 
     <ul>
-      <li><strong>Fewer GPUs needed:</strong> Cache-aware routing means better utilization of the GPUs you already have. You're not paying for redundant prefill across replicas.</li>
-      <li><strong>Observable routing:</strong> Every routing decision is exposed via metrics and logs. You can trace why a request went to a specific pod, debug latency spikes, and optimize cache hit rates.</li>
-      <li><strong>Standard Kubernetes primitives:</strong> llm-d uses Gateway API, HTTPRoute, and standard Kubernetes health probes. Nothing proprietary. You can swap components, integrate with existing observability stacks, and stay on the CNCF stack.</li>
-      <li><strong>Operationally simpler:</strong> Health-aware failover means you don't need external circuit breakers or retry logic. The EPP handles it.</li>
+      <li><strong>Latency</strong> is TTFT plus ITL. TTFT captures the initial wait that determines whether users perceive the system as responsive. ITL captures the streaming experience that determines whether the generation feels smooth or stuttery. Display both prominently on the overview dashboard, with TTFT as the primary signal and ITL as supporting context that aids in diagnosis.</li>
+      <li><strong>Traffic</strong> is requests per second plus tokens per second. Requests per second tells you how many users are being served. Tokens per second tells you how much actual computational work the cluster is performing. These can diverge significantly in practice: a few long-context requests generate enormous token volumes while the request count stays low, and conversely, many short requests can produce high request rates with modest token throughput.</li>
+      <li><strong>Errors</strong> are HTTP 5xx responses plus OOM kills. HTTP 5xx errors indicate application-level failures such as timeouts, model loading failures, or input validation errors. OOM kills indicate infrastructure-level failures where the GPU or system memory is exhausted. Track them separately because they have completely different root causes and different remediation strategies.</li>
+      <li><strong>Saturation</strong> is GPU memory utilization plus queue depth. GPU memory saturation triggers KV cache evictions that cascade into latency degradation. Queue saturation indicates insufficient compute capacity for the current traffic load. Both are leading indicators of user-facing latency problems: they spike before TTFT degrades, giving you a window to intervene proactively before users notice.</li>
     </ul>
 
-    <div class="callout callout-red">
-      <strong>Key Insight:</strong> llm-d makes LLM routing observable and intelligent. You're not guessing why requests are slow — you're watching the routing decision in real-time and tuning the weights based on your workload.
+    <h3>Dashboard Hierarchy and the RED Method</h3>
+
+    <p>Organize your dashboards in a strict drill-down hierarchy that mirrors the investigation workflow. The top-level dashboard shows the Four Golden Signals for the entire cluster in four to six large panels that are readable from across the room. If something looks wrong, clicking on the anomalous signal navigates to a second-level dashboard that shows the same signal decomposed by pod, by model, or by LoRA adapter. If a specific pod or model is misbehaving, clicking further navigates to a third-level dashboard showing that entity's detailed metrics including GPU-level counters from DCGM, per-request traces, and historical behavior patterns.</p>
+
+    <p>The RED method (Rate, Errors, Duration) works particularly well for per-model views in multi-model deployments. For each model or adapter served by your llm-d cluster, display the request rate, the error rate, and the TTFT distribution side by side. This immediately highlights which models are experiencing issues and which are healthy, and it doubles as a capacity planning tool: if one model's request rate is growing 20% month-over-month while others are flat, you know exactly where to invest in additional GPU capacity before the growth causes saturation.</p>
+
+    <h3>Panel Organization, Time Ranges, and Visual Hierarchy</h3>
+
+    <p>Use the F-pattern for panel layout: place the most critical information in the top-left corner, because eye-tracking research consistently shows that is where humans look first when scanning a page. For llm-d, the top-left panel should be TTFT p99. The panel to its right should be error rate. The second row should contain traffic and saturation panels. Detailed breakdowns and supporting metrics belong below the fold where they are available for investigation but do not compete for initial attention during triage.</p>
+
+    <p>For time ranges, default to 6 hours for the overview dashboard. This provides enough history to see trends and identify when a degradation started without overwhelming the display with noise. For active incident investigation, switch to 1-hour or 30-minute views to see fine-grained changes in real time. For weekly capacity planning reviews, use 7-day or 30-day views to identify growth trends and recurring traffic patterns. Include deployment annotations as vertical lines on all time-series charts so that metric changes can be immediately correlated with code, configuration, or model version deployments. Every time your team deploys a new model version, updates the EPP scoring weights, changes the KV cache eviction policy, or scales the cluster, that event should appear as a visible marker on the time axis of every dashboard.</p>
+
+    <p>Color coding must be consistent across every dashboard in your hierarchy. Green for healthy, amber for warning, red for critical. Use the exact same thresholds that your alerting rules use so that the dashboard colors match the alert states precisely. When a panel turns red on the overview dashboard, the operator should know with certainty that a corresponding alert has either already fired or is about to fire within the alert's <code>for</code> duration. This consistency between dashboard visuals and alert state builds trust in the monitoring system, which is the single most important factor in determining whether operators actually rely on dashboards during incidents or abandon them in favor of ad-hoc log searching and gut instinct.</p>
+
+    <div class="callout">
+      <strong>Design Principle:</strong> Every panel on your dashboard should answer exactly one question. If you cannot state the question a panel answers in a single sentence, the panel is trying to do too much. Split it into focused sub-panels or move secondary information to a drill-down dashboard one level deeper in the hierarchy.
     </div>
 
-    <h3>Try It Yourself</h3>
+    <h2>Bringing It All Together</h2>
 
-    <p>llm-d is open source and actively developed under the CNCF AI Working Group. You can find the code, documentation, and deployment guides at:</p>
+    <p>LLM inference observability is not a solved problem that you can address by installing a Helm chart and walking away. It requires understanding the unique computational characteristics of autoregressive token generation, the cascading failure modes of KV cache management under memory pressure, the cost dynamics of GPU compute at scale, and the topology constraints of modern multi-GPU servers. Standard Kubernetes monitoring will not save you. It will actively mislead you by reporting healthy dashboards while your users experience multi-second latencies caused by problems that your monitoring stack cannot even represent.</p>
 
-    <ul>
-      <li><strong>GitHub:</strong> <a href="https://github.com/llm-d/llm-d">github.com/llm-d/llm-d</a></li>
-      <li><strong>CNCF Slack:</strong> <code>#llm-d</code> channel</li>
-      <li><strong>Red Hat Blog:</strong> <a href="https://developers.redhat.com/tags/llm-d">developers.redhat.com/tags/llm-d</a></li>
-    </ul>
+    <p>The observability stack described in this guide, combining Prometheus for metrics collection, Grafana for dashboard visualization, OpenTelemetry for distributed tracing, DCGM for GPU topology and hardware health, and PromQL alerting rules calibrated specifically for LLM workloads, gives you genuine visibility into what your llm-d cluster is doing and why it is doing it. It exposes the metrics that actually determine user experience, like TTFT percentiles, KV cache hit ratio, and cost-per-token, rather than the metrics that are easy to collect but misleading to interpret, like aggregate CPU utilization and pod count.</p>
 
-    <p>The interactive sandbox is a starting point. If you want to see this running on real infrastructure, the llm-d repo has Helm charts and quickstart guides for deploying on OpenShift or vanilla Kubernetes.</p>
+    <p>Start with the metrics foundation. Instrument your vLLM pods with the ServiceMonitor configuration provided above. Build the four essential dashboards: cluster overview, pod detail, cache performance, and cost analysis. Set up the alerting rules with thresholds calibrated for your specific hardware and SLA requirements. Then add distributed tracing to understand the per-request lifecycle and diagnose routing decisions. Then add GPU topology monitoring to catch hardware degradation before it cascades into application-level failures. Each observability layer builds on the previous one, and each layer gives you visibility into a class of problems that the layers below cannot detect. The gap between collecting data and understanding your system is the difference between monitoring and observability. For LLM inference at scale, genuine understanding is not optional.</p>
 
-    <p>Start with the sandbox. Then deploy it. Then tell us what breaks.</p>
   </div>
-  <div class="footer-note">Submitted by Markell Rawls · Developer Advocate · Red Hat</div>
+
+  <div class="footer-note">Written by Markell Rawls</div>
   <div class="hub-link">
-    <a href="https://markellr-redhat.github.io/llm-d-content-hub/" style="color:#CC0000;">← Back to llm-d Content Hub</a>
-    <a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/" style="color:#0066CC;">Open Interactive App →</a>
+    <a href="https://markellr-redhat.github.io/llm-d-content-hub/" class="back-link">&larr; Back to llm-d Content Hub</a>
+    <a href="../">Open Interactive Dashboard &rarr;</a>
   </div>
+
 </div>
 </body>
 </html>
