@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inference Under the Hood: See Every Routing Decision llm-d Makes</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23EE0000' d='M50 10L90 30v40L50 90 10 70V30z'/%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap');
+  :root { --rh-red: #EE0000; --rh-red-dark: #CC0000; --rh-black: #151515; --rh-gray-dark: #3C3F42; --rh-gray-mid: #6A6E73; --rh-gray-light: #F5F5F5; --rh-blue: #0066CC; --code-bg: #1E1E2E; --code-text: #CDD6F4; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Red Hat Text', sans-serif; color: var(--rh-black); line-height: 1.7; font-size: 15px; background: #F9F9F9; }
+  .container { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+  .submission-header { background: linear-gradient(135deg, var(--rh-red-dark), var(--rh-red)); color: white; padding: 32px 40px; border-radius: 12px 12px 0 0; }
+  .submission-header h1 { font-family: 'Red Hat Display', sans-serif; font-weight: 900; font-size: 1.6em; margin-bottom: 4px; }
+  .submission-header .subtitle { opacity: 0.85; font-size: 0.95em; }
+  .meta-card { background: white; border: 1px solid #E0E0E0; border-top: none; border-radius: 0 0 12px 12px; overflow: hidden; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .meta-row { display: flex; border-bottom: 1px solid #EFEFEF; }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-label { flex: 0 0 220px; padding: 16px 20px; background: #FAFAFA; font-weight: 700; font-size: 0.88em; color: var(--rh-gray-dark); border-right: 1px solid #EFEFEF; }
+  .meta-value { flex: 1; padding: 16px 20px; }
+  .meta-value a { color: var(--rh-blue); text-decoration: none; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 0.82em; font-weight: 600; margin-right: 6px; }
+  .badge-green { background: #E6F9E6; color: #1A7A1A; }
+  .badge-blue { background: #E6F0FF; color: #004080; }
+  .badge-red { background: #FFE6E6; color: #CC0000; }
+  .article { background: white; border: 1px solid #E0E0E0; border-radius: 12px; padding: 48px 40px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .article h2 { font-family: 'Red Hat Display', sans-serif; font-weight: 800; font-size: 1.4em; color: var(--rh-black); margin: 2em 0 0.6em; padding-bottom: 8px; border-bottom: 3px solid var(--rh-red); }
+  .article h2:first-child { margin-top: 0; }
+  .article h3 { font-family: 'Red Hat Display', sans-serif; font-weight: 700; font-size: 1.1em; margin: 1.5em 0 0.5em; }
+  .article p { margin: 0 0 1.2em; }
+  .article ul, .article ol { margin: 0 0 1.2em 1.5em; }
+  .article li { margin-bottom: 0.4em; }
+  .article strong { color: var(--rh-black); }
+  .article code { font-family: 'Red Hat Mono', monospace; background: #F0F0F0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  .article pre { background: var(--code-bg); color: var(--code-text); padding: 20px; border-radius: 8px; overflow-x: auto; margin: 1.2em 0; font-family: 'Red Hat Mono', monospace; font-size: 0.85em; line-height: 1.6; }
+  .article pre code { background: none; padding: 0; color: inherit; }
+  .callout { background: #FFF8E1; border-left: 4px solid #FFC107; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 1.5em 0; font-size: 0.92em; }
+  .callout-red { background: #FFF0F0; border-left-color: var(--rh-red); }
+  .stat-box { display: inline-block; background: #F0F4FF; border: 1px solid #D0DCFF; border-radius: 8px; padding: 12px 20px; margin: 4px; text-align: center; }
+  .stat-box .number { font-family: 'Red Hat Display', sans-serif; font-size: 1.8em; font-weight: 900; color: var(--rh-red); }
+  .stat-box .label { font-size: 0.78em; color: var(--rh-gray-mid); margin-top: 2px; }
+  .footer-note { text-align: center; color: var(--rh-gray-mid); font-size: 0.85em; padding: 16px 0 8px; }
+  .hub-link { text-align: center; padding: 24px 0; }
+  .hub-link a { font-family: 'Red Hat Display', sans-serif; font-size: 0.85rem; font-weight: 600; text-decoration: none; margin: 0 12px; }
+  @media (max-width: 700px) { .meta-row { flex-direction: column; } .meta-label { flex: none; border-right: none; border-bottom: 1px solid #EFEFEF; } .article { padding: 28px 20px; } .submission-header { padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="submission-header">
+    <h1>Inference Under the Hood: See Every Routing Decision llm-d Makes</h1>
+    <div class="subtitle">A technical deep-dive into cache-aware, health-aware LLM request routing</div>
+  </div>
+  <div class="meta-card">
+    <div class="meta-row">
+      <div class="meta-label">Author</div>
+      <div class="meta-value">Markell Rawls, Developer Advocate, Red Hat</div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-label">Date</div>
+      <div class="meta-value">June 26, 2026</div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-label">Word Count</div>
+      <div class="meta-value">~1,500 words · 7 min read</div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-label">Tags</div>
+      <div class="meta-value">
+        <span class="badge badge-red">llm-d</span>
+        <span class="badge badge-blue">EPP</span>
+        <span class="badge badge-green">KV Cache</span>
+        <span class="badge badge-blue">Routing</span>
+        <span class="badge badge-green">Kubernetes</span>
+        <span class="badge badge-blue">Platform Engineering</span>
+      </div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-label">Status</div>
+      <div class="meta-value"><span class="badge badge-red">Draft</span></div>
+    </div>
+    <div class="meta-row">
+      <div class="meta-label">Interactive Demo</div>
+      <div class="meta-value"><a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/">Launch Interactive Sandbox →</a></div>
+    </div>
+  </div>
+  <div class="article">
+    <h2>What Happens When You Hit /v1/chat/completions</h2>
+
+    <p>When a request arrives at your llm-d cluster, it doesn't get dumped onto a random GPU. Unlike traditional API proxies that treat all backends identically, llm-d runs an intelligent routing layer that makes real-time decisions based on cache state, pod health, and current load.</p>
+
+    <p>Here's the journey every request takes:</p>
+
+    <ol>
+      <li><strong>Gateway API</strong> receives the HTTPS request at your cluster's edge</li>
+      <li><strong>EPP (Endpoint Picker Policy)</strong> scores every healthy pod based on four factors</li>
+      <li><strong>The winning pod</strong> handles the request, leveraging its KV cache if possible</li>
+    </ol>
+
+    <p>Each layer has a specific job. The Gateway handles authentication and rate limiting. The EPP handles routing intelligence. The vLLM pods handle inference. No single component tries to do everything.</p>
+
+    <h2>The Gateway: Your Cluster's Front Door</h2>
+
+    <p>The Gateway API is your cluster's entry point. It's based on the <strong>Kubernetes Gateway API</strong> standard, which means you're not locked into proprietary infrastructure. TLS termination, rate limiting, and authentication all happen here before the request reaches the routing layer.</p>
+
+    <p>The Gateway uses an <code>HTTPRoute</code> with custom backend references pointing to the EPP. This is where llm-d diverges from traditional load balancers: instead of round-robin or least-connections, the Gateway delegates routing decisions to a policy-driven component that understands LLM workloads.</p>
+
+    <div class="callout">
+      <strong>Key Point:</strong> The Gateway doesn't decide which pod gets the request. It enforces security and compliance, then hands the routing decision to the EPP.
+    </div>
+
+    <h2>The EPP: The Brain Behind Every Routing Decision</h2>
+
+    <p>EPP stands for <strong>Endpoint Picker Policy</strong>. It's the component that makes llm-d intelligent. The EPP maintains a real-time model of every pod in your cluster: which prompts they've cached, how many requests they're handling, how deep their queues are, and whether they're healthy.</p>
+
+    <p>When a request arrives, the EPP scores every candidate pod using four factors:</p>
+
+    <ol>
+      <li><strong>Prefix cache match length</strong> — How many tokens of the incoming request are already cached on this pod (highest weight)</li>
+      <li><strong>Pod load</strong> — <code>num_requests_running / capacity</code></li>
+      <li><strong>Queue depth</strong> — <code>num_requests_waiting</code></li>
+      <li><strong>Health status</strong> — Is the pod healthy, degraded, or failing</li>
+    </ol>
+
+    <h3>A Concrete Scoring Example</h3>
+
+    <p>Let's say you have three pods and a request comes in with a 32K-token context. Here's how the EPP might score them:</p>
+
+    <ul>
+      <li><strong>Pod A:</strong> 28K tokens cached, 2/8 requests running, 1 queued, healthy → <strong>Score: 950</strong></li>
+      <li><strong>Pod B:</strong> 0 tokens cached, 1/8 requests running, 0 queued, healthy → <strong>Score: 400</strong></li>
+      <li><strong>Pod C:</strong> 15K tokens cached, 4/8 requests running, 3 queued, healthy → <strong>Score: 620</strong></li>
+    </ul>
+
+    <p>Pod A wins. Even though it's handling more requests than Pod B, the 28K-token cache match is worth far more than the slight load difference. The request goes to Pod A, which skips prefilling those 28K tokens and jumps straight to generating the response.</p>
+
+    <div class="callout callout-red">
+      <strong>Why cache match is weighted highest:</strong> Avoiding redundant prefill is the single biggest latency win in LLM inference. A cache hit can reduce time-to-first-token by 40-50x.
+    </div>
+
+    <h2>KV Cache: The Hidden Accelerator</h2>
+
+    <p>To understand why prefix caching matters so much, you need to know what a KV cache is.</p>
+
+    <p>During the attention mechanism in a transformer model, the model computes <strong>key-value pairs</strong> for every token in the context. These pairs represent "what this token pays attention to" and are expensive to compute — but once computed, they can be reused if the same prefix appears in a future request.</p>
+
+    <p>vLLM implements <strong>automatic prefix caching</strong>. When a request comes in, vLLM checks if any prefix of the prompt matches something it's already processed. If there's a match, it reuses the cached KV pairs and only computes new ones for the novel portion of the prompt.</p>
+
+    <p>Think of it as a lookup table for work already done. If you've already processed "Summarize this legal document: [30K tokens of contract]", and a new request comes in with the same contract plus "focusing on liability clauses", you only pay the cost of computing the new suffix.</p>
+
+    <div style="text-align: center; margin: 1.5em 0;">
+      <div class="stat-box">
+        <div class="number">3.7s</div>
+        <div class="label">Cold prefill (32K tokens)</div>
+      </div>
+      <div class="stat-box">
+        <div class="number">0.08s</div>
+        <div class="label">Cached prefill (32K tokens)</div>
+      </div>
+      <div class="stat-box">
+        <div class="number">47.5x</div>
+        <div class="label">Improvement</div>
+      </div>
+    </div>
+
+    <p>These numbers are from real vLLM benchmarks on Llama 3.1 70B. The difference between a cache hit and a cache miss is the difference between sub-100ms latency and multi-second latency.</p>
+
+    <h2>Health-Aware Failover: When Things Go Wrong</h2>
+
+    <p>Pods fail. GPUs run out of memory. Networks flake. llm-d is designed to route around failures gracefully.</p>
+
+    <p>The EPP continuously monitors pod health using Kubernetes liveness and readiness probes. Each pod reports its status:</p>
+
+    <ul>
+      <li><strong>Green:</strong> Healthy, accepting requests</li>
+      <li><strong>Amber:</strong> Degraded (high load, slow responses), but still alive</li>
+      <li><strong>Red:</strong> Unhealthy (probe failures, OOM events, GPU errors)</li>
+    </ul>
+
+    <p>When a pod transitions to red, the EPP immediately removes it from the candidate pool. In-flight requests may be retried on healthy pods if the failure is detected early enough. The KV cache on the failed pod is lost, but the EPP knows this and won't route subsequent requests there until the pod recovers.</p>
+
+    <p>Graceful degradation happens at the amber stage. A pod under heavy load gets a lower score, so new requests flow to healthier pods. This prevents a single pod from becoming a hotspot and cascading into full failure.</p>
+
+    <div class="callout">
+      <strong>Operational Benefit:</strong> You can watch health transitions in real-time using the interactive sandbox. This is observable infrastructure — no more black-box load balancers where you guess why requests are slow.
+    </div>
+
+    <h2>Seeing It All in Action</h2>
+
+    <p>The <a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/">interactive sandbox</a> lets you see every routing decision llm-d makes. You can watch requests flow through the Gateway, see the EPP score each pod, and observe how cache state influences routing.</p>
+
+    <p>Each scenario demonstrates a different aspect of llm-d's routing intelligence:</p>
+
+    <ul>
+      <li><strong>Cached vs. Cold Start:</strong> Send the same prompt twice and watch the second request route to the pod that cached it</li>
+      <li><strong>Load Balancing:</strong> Fire a burst of traffic and see how the EPP distributes load across healthy pods</li>
+      <li><strong>Failover:</strong> Kill a pod mid-request and watch the EPP route new traffic around it</li>
+      <li><strong>Cache Drift:</strong> Send divergent prompts and observe how cache affinity breaks down when contexts no longer overlap</li>
+    </ul>
+
+    <p>The sandbox is fully client-side — no backend, no API keys, no telemetry. It's a pedagogical tool, not a sales demo. Try the burst traffic scenario to see load balancing in action, or the failover scenario to watch health-aware routing respond to pod failures.</p>
+
+    <h2>What This Means for Platform Engineers</h2>
+
+    <p>If you're running LLM inference at scale, llm-d changes the economics:</p>
+
+    <ul>
+      <li><strong>Fewer GPUs needed:</strong> Cache-aware routing means better utilization of the GPUs you already have. You're not paying for redundant prefill across replicas.</li>
+      <li><strong>Observable routing:</strong> Every routing decision is exposed via metrics and logs. You can trace why a request went to a specific pod, debug latency spikes, and optimize cache hit rates.</li>
+      <li><strong>Standard Kubernetes primitives:</strong> llm-d uses Gateway API, HTTPRoute, and standard Kubernetes health probes. Nothing proprietary. You can swap components, integrate with existing observability stacks, and stay on the CNCF stack.</li>
+      <li><strong>Operationally simpler:</strong> Health-aware failover means you don't need external circuit breakers or retry logic. The EPP handles it.</li>
+    </ul>
+
+    <div class="callout callout-red">
+      <strong>Key Insight:</strong> llm-d makes LLM routing observable and intelligent. You're not guessing why requests are slow — you're watching the routing decision in real-time and tuning the weights based on your workload.
+    </div>
+
+    <h3>Try It Yourself</h3>
+
+    <p>llm-d is open source and actively developed under the CNCF AI Working Group. You can find the code, documentation, and deployment guides at:</p>
+
+    <ul>
+      <li><strong>GitHub:</strong> <a href="https://github.com/llm-d/llm-d">github.com/llm-d/llm-d</a></li>
+      <li><strong>CNCF Slack:</strong> <code>#llm-d</code> channel</li>
+      <li><strong>Red Hat Blog:</strong> <a href="https://developers.redhat.com/tags/llm-d">developers.redhat.com/tags/llm-d</a></li>
+    </ul>
+
+    <p>The interactive sandbox is a starting point. If you want to see this running on real infrastructure, the llm-d repo has Helm charts and quickstart guides for deploying on OpenShift or vanilla Kubernetes.</p>
+
+    <p>Start with the sandbox. Then deploy it. Then tell us what breaks.</p>
+  </div>
+  <div class="footer-note">Submitted by Markell Rawls · Developer Advocate · Red Hat</div>
+  <div class="hub-link">
+    <a href="https://markellr-redhat.github.io/llm-d-content-hub/" style="color:#CC0000;">← Back to llm-d Content Hub</a>
+    <a href="https://markellr-redhat.github.io/llm-d-transparent-cluster/" style="color:#0066CC;">Open Interactive App →</a>
+  </div>
+</div>
+</body>
+</html>
