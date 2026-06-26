@@ -545,8 +545,9 @@
     <a href="#section-1" class="ql-section">1. Why Specialized Observability</a>
     <a href="#section-2" class="ql-section">2. Key Metrics</a>
     <a href="#section-3" class="ql-section">3. Monitoring Stack</a>
-    <a href="#section-4" class="ql-section">4. PromQL Queries</a>
-    <a href="#section-5" class="ql-section">5. The 10 Essential PromQL Queries</a>
+    <a href="#section-4" class="ql-section">4. The Observability Tax</a>
+    <a href="#section-5" class="ql-section">5. PromQL Queries</a>
+    <a href="#section-6" class="ql-section">6. The 10 Essential PromQL Queries</a>
     <hr class="ql-divider">
     <a href="#query-1" class="ql-sub">Q1: TTFT p99</a>
     <a href="#query-2" class="ql-sub">Q2: Token Throughput</a>
@@ -559,15 +560,28 @@
     <a href="#query-9" class="ql-sub">Q9: Cost per Token</a>
     <a href="#query-10" class="ql-sub">Q10: Cache Eviction Rate</a>
     <hr class="ql-divider">
-    <a href="#section-6" class="ql-section">6. Alerting Strategy</a>
-    <a href="#section-7" class="ql-section">7. Alert Runbooks</a>
-    <a href="#section-8" class="ql-section">8. Distributed Tracing</a>
-    <a href="#section-9" class="ql-section">9. OpenTelemetry Setup</a>
-    <a href="#section-10" class="ql-section">10. GPU Topology Monitoring</a>
-    <a href="#section-11" class="ql-section">11. Cost Observability</a>
-    <a href="#section-12" class="ql-section">12. Grafana Dashboard JSON</a>
-    <a href="#section-13" class="ql-section">13. Dashboard Design Patterns</a>
-    <a href="#section-14" class="ql-section">14. Bringing It All Together</a>
+    <a href="#section-7" class="ql-section">7. Advanced PromQL Queries</a>
+    <hr class="ql-divider">
+    <a href="#query-11" class="ql-sub">Q11: KV Cache Fragmentation</a>
+    <a href="#query-12" class="ql-sub">Q12: Prefix Sharing Efficiency</a>
+    <a href="#query-13" class="ql-sub">Q13: LoRA Swap Frequency</a>
+    <a href="#query-14" class="ql-sub">Q14: EPP Routing Distribution</a>
+    <a href="#query-15" class="ql-sub">Q15: Throughput by Adapter</a>
+    <a href="#query-16" class="ql-sub">Q16: Queue Wait Time</a>
+    <a href="#query-17" class="ql-sub">Q17: GPU Thermal Headroom</a>
+    <a href="#query-18" class="ql-sub">Q18: ITL Stability</a>
+    <hr class="ql-divider">
+    <a href="#section-8" class="ql-section">8. Alerting Strategy</a>
+    <a href="#section-9" class="ql-section">9. Alert Runbooks</a>
+    <a href="#section-10" class="ql-section">10. SRE On-Call Playbook</a>
+    <a href="#section-11" class="ql-section">11. Distributed Tracing</a>
+    <a href="#section-12" class="ql-section">12. OpenTelemetry Setup</a>
+    <a href="#section-13" class="ql-section">13. GPU Topology Monitoring</a>
+    <a href="#section-14" class="ql-section">14. Cost Observability</a>
+    <a href="#section-15" class="ql-section">15. Grafana Dashboard JSON</a>
+    <a href="#section-16" class="ql-section">16. Dashboard Design Patterns</a>
+    <a href="#section-17" class="ql-section">17. Dashboard Anti-Patterns</a>
+    <a href="#section-18" class="ql-section">18. Bringing It All Together</a>
   </nav>
 
   <div class="main-content">
@@ -588,7 +602,7 @@
       </div>
       <div class="meta-cell">
         <span class="mc-label">Read Time</span>
-        <span class="mc-value">~22 min</span>
+        <span class="mc-value">~35 min</span>
       </div>
       <div class="meta-cell">
         <span class="mc-label">Status</span>
@@ -600,7 +614,7 @@
       </div>
       <div class="meta-cell">
         <span class="mc-label">Sections</span>
-        <span class="mc-value">14 sections, 10 PromQL queries</span>
+        <span class="mc-value">18 sections, 18 PromQL queries</span>
       </div>
     </div>
     <div class="meta-tags">
@@ -726,7 +740,25 @@
 
     <p>Dashboard organization matters more than people realize. A common mistake is building a single monolithic dashboard with fifty panels that no one can parse during an incident. Instead, organize your dashboards into a clear hierarchy: a top-level overview dashboard that shows cluster-wide health at a glance, a pod-level dashboard that shows detailed metrics for individual inference servers, a cache dashboard focused on KV cache behavior and routing effectiveness, and a cost dashboard that tracks GPU utilization efficiency and cost-per-token. Each dashboard should answer a specific question. The overview dashboard answers "is the cluster healthy right now?" The pod dashboard answers "why is this specific pod underperforming?" The cache dashboard answers "is our routing layer doing its job?" This separation keeps each dashboard focused and scannable rather than overwhelming operators with an undifferentiated wall of charts during a high-stress incident.</p>
 
-    <h2 id="section-4"><span class="section-num">04</span> PromQL Queries for Critical Dashboards</h2>
+    <h2 id="section-4"><span class="section-num">04</span> The Observability Tax</h2>
+
+    <p>Monitoring infrastructure is not free. Every scrape, every trace, every log line consumes compute, network, and storage resources that could otherwise serve inference requests. Understanding and managing this overhead is essential for production deployments where resource efficiency directly affects cost and performance. The goal is maximum visibility with minimum impact, and achieving that balance requires deliberate choices about scrape intervals, sampling rates, polling frequencies, and log volume.</p>
+
+    <p>Prometheus scrape intervals consume CPU on inference pods in ways that are easy to overlook. Each scrape requires the vLLM metrics endpoint to serialize hundreds of counters into the Prometheus exposition format. On a busy inference pod, this serialization competes with the inference engine for CPU cycles. At a 15-second scrape interval, the overhead is negligible for most deployments. At a 5-second interval across 20+ pods, the cumulative CPU impact becomes measurable, particularly on pods where CPU is already constrained because most compute happens on the GPU and CPU allocation is minimal. The serialization itself is fast, but when the metrics endpoint exposes thousands of histogram buckets (as vLLM does for TTFT and ITL distributions), the cost of iterating over all buckets and formatting them as text adds up across frequent scrapes.</p>
+
+    <p>Trace sampling rates present a direct tradeoff between visibility and storage costs. 100% trace sampling is impractical at production scale. A cluster handling 1,000 requests per second generates millions of spans per hour, and storing all of them requires enormous amounts of storage and incurs significant query latency in Jaeger or Tempo. Tail-based sampling is the recommended strategy: sample 100% of traces that exceed a latency threshold (for example, TTFT > 3 seconds) and sample a small percentage (5-10%) of normal traces for baseline visibility. This captures every problematic request while keeping storage costs manageable. The tail-based approach ensures that you never miss the traces that matter most, the ones where something went wrong, while still maintaining a representative sample of healthy requests for baseline comparison and trend analysis.</p>
+
+    <p>The DCGM exporter introduces its own overhead on GPU performance. The exporter polls GPU counters at a configurable frequency, and high-frequency polling (every 1 second) provides granular visibility but introduces measurable overhead on the GPU driver. This overhead can add microseconds of jitter to CUDA kernel launches, which is inconsequential for most workloads but can compound during latency-sensitive decode iterations where consistent timing matters. For most production deployments, polling every 5-10 seconds provides sufficient granularity for alerting and trend analysis without meaningful performance impact. Reserve 1-second polling for targeted debugging sessions, not continuous production monitoring. When you need to investigate a specific GPU behavior anomaly, temporarily increase the polling frequency on the affected node, gather the data you need, and then restore the production polling interval.</p>
+
+    <p>Log volume management is another dimension of the observability tax that scales linearly with request throughput. Structured JSON logging from vLLM, the EPP, and the Gateway generates substantial log volume. A single inference request can produce 5-10 log lines across the stack, and at 1,000 requests per second, that is 5,000 to 10,000 log lines per second flowing through your log pipeline. Size your log aggregation infrastructure (Loki, Elasticsearch, or CloudWatch) accordingly, and implement log level filtering at the source rather than at the aggregator to reduce network bandwidth consumption. Setting vLLM to <code>WARNING</code> level in production eliminates the per-request <code>INFO</code> lines that dominate log volume while preserving the error and warning messages that you actually need for diagnosis.</p>
+
+    <p>Balancing visibility against overhead requires concrete guidelines rather than vague advice to "monitor wisely." Use 15-second scrape intervals for Prometheus; this is the sweet spot between granularity and overhead for LLM inference workloads. Combine 5-10% head-based sampling with 100% tail-based sampling for traces that exceed your SLA thresholds. Set DCGM polling intervals to 5 seconds for production monitoring. Retain high-cardinality metrics for 7 days, which covers most incident investigation windows, and keep aggregated rollups for 90 days for capacity planning and trend analysis. These specific numbers are not arbitrary; they reflect the operational experience of running LLM inference clusters where the cost of over-instrumenting is measured in GPU cycles that could have generated tokens.</p>
+
+    <div class="callout">
+      <strong>Rule of Thumb:</strong> Your observability stack should consume less than 2% of your cluster's total CPU and less than 5% of your network bandwidth. If monitoring overhead exceeds these thresholds, you are over-instrumenting. Reduce scrape frequency, increase sampling ratios, or implement metric pre-aggregation at the source before shipping to Prometheus.
+    </div>
+
+    <h2 id="section-5"><span class="section-num">05</span> PromQL Queries for Critical Dashboards</h2>
 
     <p>The power of Prometheus lies in PromQL, its query language. For LLM inference monitoring, you need queries that go beyond simple rate calculations to capture the nuanced behavior of autoregressive generation, cache dynamics, and multi-model serving. Here are the essential queries for every llm-d production dashboard, with explanations of what each measures and how to use it effectively in Grafana panels.</p>
 
@@ -805,7 +837,7 @@
 
     <p>These queries form the backbone of your operational dashboards. Each one answers a specific question: Are users waiting too long? Are we generating tokens fast enough? Is the cache working? Are GPUs running out of memory? Are requests piling up? Which models are getting the most traffic? Are we returning errors? Layer these queries into Grafana panels with appropriate color-coded thresholds and you have a monitoring stack that exposes the true health of your LLM inference cluster rather than the misleading picture painted by generic Kubernetes metrics.</p>
 
-    <h2 id="section-5"><span class="section-num">05</span> The 10 PromQL Queries Every llm-d Operator Needs</h2>
+    <h2 id="section-6"><span class="section-num">06</span> The 10 PromQL Queries Every llm-d Operator Needs</h2>
 
     <p>Below are the ten queries you should have bookmarked, pinned, and ready to paste into any Grafana panel. Each one targets a specific operational question. Together they give you complete coverage of latency, throughput, caching, cost, and hardware health for an llm-d cluster.</p>
 
@@ -951,7 +983,129 @@
       <strong>Tip:</strong> Save these ten queries as a Grafana <em>library panel</em> collection. When you build new dashboards you can drag them in rather than rewriting them from memory during an incident.
     </div>
 
-    <h2 id="section-6"><span class="section-num">06</span> Alerting Strategy</h2>
+    <h2 id="section-7"><span class="section-num">07</span> Advanced PromQL Queries for llm-d</h2>
+
+    <p>Beyond the ten essential queries, advanced operators need deeper visibility into cache behavior, adapter management, routing efficiency, and hardware health. The following eight queries provide that next level of insight. Each targets a specific operational blind spot that the essential queries do not cover.</p>
+
+    <ol class="query-list">
+
+      <li id="query-11">
+        <div class="query-title">KV Cache Fragmentation Rate</div>
+        <div class="query-desc">Ratio of allocated-but-wasted cache blocks to total allocated blocks. High fragmentation means the cache is reserving memory that is not being used effectively, reducing the usable cache capacity. Sustained fragmentation above 20% indicates that the block allocator needs tuning or that request patterns are causing excessive partial block allocation.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code>(<span class="syn-field">vllm_cache_blocks_allocated</span> <span class="syn-op">-</span> <span class="syn-field">vllm_cache_blocks_used</span>) <span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(<span class="syn-field">vllm_cache_blocks_allocated</span>, <span class="syn-num">1</span>) <span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-12">
+        <div class="query-title">Prefix Sharing Efficiency Ratio</div>
+        <div class="query-desc">Measures how effectively requests share cached prefixes across the cluster. A high ratio means the EPP is successfully routing requests with common prefixes to the same pods, maximizing cache reuse. Below 30% means prefix-aware routing is not delivering meaningful benefits and you should review EPP cache affinity weights.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_prefix_cache_shared_tokens_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_prefix_cache_total_tokens_total</span>[<span class="syn-num">5m</span>])), <span class="syn-num">1</span>)
+<span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-13">
+        <div class="query-title">LoRA Adapter Switch Frequency per Pod</div>
+        <div class="query-desc">Identifies pods suffering from adapter thrashing, where adapters are loaded and unloaded so frequently that swap overhead dominates useful inference time. Pods with a swap rate above 2 per minute are likely experiencing latency degradation from constant weight loading. Group by pod to identify which specific pods need routing adjustments.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span> <span class="syn-key">by</span> (<span class="syn-label">pod</span>) (<span class="syn-func">rate</span>(<span class="syn-field">vllm_lora_adapter_swaps_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">*</span> <span class="syn-num">60</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-14">
+        <div class="query-title">EPP Routing Decision Distribution</div>
+        <div class="query-desc">Shows whether traffic is balanced across pods or whether the EPP is creating hotspots by repeatedly selecting the same pods. A healthy distribution has a coefficient of variation below 0.3 across pods. Values above 0.5 indicate significant routing imbalance that warrants investigation of scoring weights.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">stddev</span>(<span class="syn-func">sum</span> <span class="syn-key">by</span> (<span class="syn-label">pod</span>) (<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_total</span>[<span class="syn-num">5m</span>]))) <span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(<span class="syn-func">avg</span>(<span class="syn-func">sum</span> <span class="syn-key">by</span> (<span class="syn-label">pod</span>) (<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_total</span>[<span class="syn-num">5m</span>]))), <span class="syn-num">0.001</span>)</code></pre>
+        </div>
+      </li>
+
+      <li id="query-15">
+        <div class="query-title">Token Generation Throughput by Adapter</div>
+        <div class="query-desc">Per-adapter performance comparison that reveals whether certain LoRA adapters are generating tokens significantly slower than others. Adapter-specific performance differences can indicate that certain adapter weights interact poorly with the base model's KV cache patterns, or that adapter size is causing memory pressure on specific pods.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span> <span class="syn-key">by</span> (<span class="syn-label">adapter</span>) (<span class="syn-func">rate</span>(<span class="syn-field">vllm_tokens_generated_total</span>[<span class="syn-num">5m</span>]))</code></pre>
+        </div>
+      </li>
+
+      <li id="query-16">
+        <div class="query-title">Queue Wait Time Histogram</div>
+        <div class="query-desc">Distribution of how long requests wait in the inference queue before starting prefill. The p99 of queue wait time is a leading indicator of capacity problems: it rises before TTFT degrades because queue time is a component of TTFT. Alert on p99 queue wait above 2 seconds.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.99</span>,
+  <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_queue_time_seconds_bucket</span>[<span class="syn-num">5m</span>])
+)</code></pre>
+        </div>
+      </li>
+
+      <li id="query-17">
+        <div class="query-title">GPU Thermal Headroom</div>
+        <div class="query-desc">How close GPUs are to thermal throttling thresholds. Most datacenter GPUs begin throttling at 83-85 degrees Celsius. Tracking thermal headroom (the gap between current temperature and throttle point) provides early warning of cooling failures or workload-driven thermal issues. Below 10 degrees of headroom, performance may already be degrading due to dynamic frequency scaling.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-num">85</span> <span class="syn-op">-</span> <span class="syn-field">DCGM_FI_DEV_GPU_TEMP</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-18">
+        <div class="query-title">Inter-Token Latency Stability (ITL Coefficient of Variation)</div>
+        <div class="query-desc">Variance in ITL that indicates decode contention. A low coefficient of variation (below 0.3) means consistent, smooth token generation. Values above 0.5 indicate that the decode phase is experiencing significant jitter, usually caused by competing prefill operations, memory bandwidth saturation, or thermal throttling interfering with decode iterations.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">stddev_over_time</span>(
+  <span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.50</span>, <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_itl_seconds_bucket</span>[<span class="syn-num">1m</span>]))[<span class="syn-num">10m</span>:]
+)
+<span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(
+  <span class="syn-func">avg_over_time</span>(
+    <span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.50</span>, <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_itl_seconds_bucket</span>[<span class="syn-num">1m</span>]))[<span class="syn-num">10m</span>:]
+  ), <span class="syn-num">0.0001</span>
+)</code></pre>
+        </div>
+      </li>
+
+    </ol>
+
+    <div class="callout">
+      <strong>Tip:</strong> Combine these advanced queries with the ten essential queries from the previous section to build a comprehensive "deep dive" dashboard. Use the essential queries for your overview panels and reserve the advanced queries for drill-down views that operators access during active investigations.
+    </div>
+
+    <h2 id="section-8"><span class="section-num">08</span> Alerting Strategy</h2>
 
     <p>Not everything that belongs on a dashboard deserves an alert. Alert fatigue is the fastest way to ensure that real incidents get ignored because operators have been conditioned to dismiss notifications as noise. The distinction is simple: dashboards are for exploration and context during investigation, alerts are for situations that require human intervention within a defined time window. If a metric being out of range does not require someone to take action, it belongs on a dashboard panel, not in an alerting rule.</p>
 
@@ -1067,7 +1221,7 @@
 
     <p>To avoid alert fatigue, use inhibition rules to suppress warning-level alerts when a critical alert is already firing for the same component. If <code>HighTTFTCritical</code> is active, there is no value in also firing <code>HighTTFTWarning</code> or <code>LowCacheHitRate</code>. Group related alerts so that a single notification contains all the context an operator needs to diagnose the issue. And always include a runbook link in the alert annotations that explains not just what the alert means but what specific steps to take in response. An alert without a runbook is just noise that erodes operator confidence in the monitoring system.</p>
 
-    <h2 id="section-7"><span class="section-num">07</span> Alert Runbooks</h2>
+    <h2 id="section-9"><span class="section-num">09</span> Alert Runbooks</h2>
 
     <p>Every alert needs a corresponding runbook. Below are step-by-step response procedures for the three most critical alerts in an llm-d deployment. These are designed to be followed in order during an incident, with each step narrowing the diagnosis until you reach the root cause.</p>
 
@@ -1116,7 +1270,96 @@
       </div>
     </div>
 
-    <h2 id="section-8"><span class="section-num">08</span> Distributed Tracing for Inference</h2>
+    <h2 id="section-10"><span class="section-num">10</span> SRE On-Call Playbook</h2>
+
+    <p>Beyond individual alert runbooks, on-call engineers need structured playbooks for complex incidents that involve multiple correlated symptoms. The following five playbooks cover the most common llm-d incident patterns. Each playbook includes symptoms to watch for, diagnostic steps with specific commands and queries, and remediation actions ranked by urgency.</p>
+
+    <h3>TTFT Spike Investigation</h3>
+
+    <p>P99 TTFT exceeds 5 seconds and continues climbing. User complaints about slow initial responses arrive via support channels. The cluster-wide average TTFT has doubled from its baseline within the last 15 minutes.</p>
+
+    <div class="runbook">
+      <div class="runbook-header">PLAYBOOK: TTFT Spike Investigation</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Check cache hit rate.</strong> Run <code>sum(rate(vllm_cache_hits_total[5m])) / (sum(rate(vllm_cache_hits_total[5m])) + sum(rate(vllm_cache_misses_total[5m]))) * 100</code>. If below 40%, the root cause is likely routing or cache eviction. Proceed to step 2.</li>
+          <li><strong>Check queue depth per pod.</strong> Run <code>sum by (pod) (vllm_num_requests_waiting)</code>. If one or two pods have queue depths 5x higher than others, the EPP is creating hotspots. Check EPP logs for stale health data.</li>
+          <li><strong>Inspect EPP routing logs.</strong> Run <code>kubectl logs -n llm-d -l app=epp --since=5m | grep "scoring"</code>. Look for pods consistently scored zero or cache affinity weights being overridden.</li>
+          <li><strong>Check for prefill/decode imbalance.</strong> Run <code>sum(vllm_num_requests_prefill) / clamp_min(sum(vllm_num_requests_decode), 1)</code>. A ratio above 0.5 means prefill is starving decode throughput.</li>
+          <li><strong>Remediation:</strong> Adjust EPP cache affinity weight upward (from 0.3 to 0.5 or higher). If queue depth is the issue, scale pods horizontally with <code>kubectl scale deployment vllm-inference -n llm-d --replicas=&lt;current+2&gt;</code>. If the issue persists, enable admission control to reject requests above a queue depth threshold.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>KV Cache Thrashing</h3>
+
+    <p>Cache eviction rate spikes to 10x its baseline. Cache hit ratio collapses from 60%+ to below 20% within minutes. TTFT degrades in lockstep with the cache collapse. GPU memory utilization is at or above 95%.</p>
+
+    <div class="runbook">
+      <div class="runbook-header">PLAYBOOK: KV Cache Thrashing</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Confirm memory pressure.</strong> Run <code>DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100</code>. If above 95% on most pods, the cache is being squeezed by model weights and active request state.</li>
+          <li><strong>Check cache block utilization.</strong> Run <code>vllm_cache_blocks_used / vllm_cache_blocks_total * 100</code>. If at 100%, new requests are forcing evictions of existing cache entries.</li>
+          <li><strong>Review request distribution.</strong> Run <code>sum by (pod) (rate(vllm_request_total[5m]))</code>. Check whether a few pods are receiving disproportionate traffic, causing localized memory pressure.</li>
+          <li><strong>Check for long-running requests consuming cache.</strong> Check <code>vllm_num_requests_running</code> per pod. A single request generating 50K+ tokens can pin a large amount of KV cache memory.</li>
+          <li><strong>Remediation:</strong> Increase KV cache allocation by reducing <code>--max-num-seqs</code> to limit concurrent requests and free cache memory. If the cluster has spare GPU capacity, scale horizontally. For immediate relief, adjust the cache eviction policy to prefer evicting short, low-reuse prefixes over long, high-reuse ones.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>GPU OOM Cascade</h3>
+
+    <p>One or more pods restart with CUDA OOM errors visible in logs. Remaining pods become overloaded as traffic redistributes, potentially triggering additional OOM kills. Pod restart count increases by 3+ within a 15-minute window.</p>
+
+    <div class="runbook">
+      <div class="runbook-header">PLAYBOOK: GPU OOM Cascade</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Identify the failing pod(s).</strong> Run <code>kubectl get pods -n llm-d --sort-by='.status.containerStatuses[0].restartCount'</code>. Check the restart count and last restart time.</li>
+          <li><strong>Review pod logs.</strong> Run <code>kubectl logs -n llm-d &lt;pod-name&gt; --previous | grep -i "oom\|cuda\|memory"</code>. Confirm whether the crash was a CUDA OOM (GPU memory exhaustion) or a system OOM (host memory exhaustion).</li>
+          <li><strong>Check DCGM memory metrics leading up to the crash.</strong> Query <code>DCGM_FI_DEV_FB_USED</code> for the affected pod over the last 10 minutes. Look for a memory ramp that hits 100% immediately before the restart.</li>
+          <li><strong>Check model memory footprint.</strong> For a 70B model in FP16 on 4x A100-80GB, weights alone consume approximately 140GB. Verify that <code>--max-model-len</code> and <code>--max-num-seqs</code> are configured to leave at least 40% of GPU memory for KV cache.</li>
+          <li><strong>Remediation:</strong> Restart the affected pod with reduced concurrency: lower <code>--max-num-seqs</code> from 256 to 128. If OOM persists, reduce <code>--max-model-len</code> to limit maximum context length. For systemic OOM, scale horizontally to distribute memory pressure across more pods. Consider enabling <code>--enforce-eager</code> mode temporarily to disable CUDA graph caching, which trades some throughput for reduced memory footprint.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>EPP Routing Imbalance</h3>
+
+    <p>One pod shows 90%+ GPU utilization while others sit at 30% or below. Queue depth is heavily asymmetric across pods. TTFT varies wildly between requests, with some completing in 200ms and others taking 8+ seconds depending on which pod handles them.</p>
+
+    <div class="runbook">
+      <div class="runbook-header">PLAYBOOK: EPP Routing Imbalance</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Confirm the imbalance.</strong> Run <code>sum by (pod) (rate(vllm_request_total[5m]))</code>. Compare request rates across pods. A healthy distribution should have all pods within 20% of the mean.</li>
+          <li><strong>Check EPP scoring weights.</strong> Review the EPP configuration. Verify that cache affinity, load score, and queue depth are all contributing to the routing decision rather than a single factor dominating.</li>
+          <li><strong>Check pod health reporting.</strong> Run <code>kubectl logs -n llm-d -l app=epp --since=10m | grep "health"</code>. Look for pods reporting stale health data or failing health checks, which can cause the EPP to avoid them entirely and overload remaining pods.</li>
+          <li><strong>Check cache affinity scores.</strong> If one pod has cached a very popular prefix, the EPP may be sending all requests for that prefix to the same pod regardless of load. Verify that the load balancing weight is high enough to counteract extreme cache affinity.</li>
+          <li><strong>Remediation:</strong> Rebalance EPP weights by increasing the load factor relative to cache affinity. If stale health data is the issue, reduce the health check interval or restart the EPP. If a single prefix is causing affinity-driven hotspots, consider pre-warming the cache on additional pods by sending a few warmup requests with that prefix to other pods.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>Model Loading Failures</h3>
+
+    <p>New pods are stuck in Init or CrashLoopBackOff state. Pod logs show model download timeouts, checksum mismatches, or tensor parallel shard connection failures. The cluster has reduced serving capacity because replacement pods cannot start.</p>
+
+    <div class="runbook">
+      <div class="runbook-header">PLAYBOOK: Model Loading Failures</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Check pod status.</strong> Run <code>kubectl describe pod &lt;pod-name&gt; -n llm-d</code>. Look at the Events section for scheduling failures, image pull errors, or init container failures.</li>
+          <li><strong>Check model storage accessibility.</strong> If using a PersistentVolumeClaim or S3-compatible storage, verify that the storage backend is responsive: <code>kubectl exec -n llm-d &lt;running-pod&gt; -- ls -la /models/</code>.</li>
+          <li><strong>Check node GPU availability.</strong> Run <code>kubectl describe node &lt;node-name&gt; | grep -A5 "nvidia.com/gpu"</code>. Verify that the node has enough free GPU resources for the pod's request. If tensor parallelism requires 4 GPUs and only 2 are available, scheduling will fail.</li>
+          <li><strong>Check tensor parallel communication.</strong> For tensor parallel failures, check whether all shards can communicate. Review logs for NVLink topology errors or NCCL initialization failures. Run <code>kubectl logs -n llm-d &lt;pod-name&gt; | grep -i "nccl\|nvlink\|topology"</code>.</li>
+          <li><strong>Remediation:</strong> If the issue is storage, verify network connectivity to the model repository and check for expired credentials. If the issue is GPU availability, check whether other pods or jobs are consuming GPU resources on the target node. If tensor parallel initialization fails, verify that the pod's GPU request matches the model's tensor parallel degree and that all requested GPUs are on the same NVLink domain. As a last resort, delete the stuck pod and let the deployment controller create a new one on a different node: <code>kubectl delete pod &lt;pod-name&gt; -n llm-d</code>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h2 id="section-11"><span class="section-num">11</span> Distributed Tracing for Inference</h2>
 
     <p>Metrics tell you that something is wrong. Traces tell you where it went wrong and why. For llm-d, distributed tracing is essential because a single inference request traverses multiple components, each with its own latency contribution and failure modes. Understanding the full request lifecycle requires end-to-end traces that correlate events across the Gateway, EPP, and vLLM inference pods into a single coherent narrative.</p>
 
@@ -1166,7 +1409,7 @@
 
     <p>The real power of tracing emerges when you correlate traces with metrics. A TTFT spike on your Grafana dashboard becomes immediately actionable when you can click through to the specific traces that contributed to the p99 and see that they all missed the cache on a specific pod, or that they all spent 3 seconds waiting in the EPP queue because a pod health check was returning stale data. This correlation between aggregate metrics and individual request traces is what transforms monitoring from "something is wrong somewhere" to "here is exactly what went wrong, on which component, and why."</p>
 
-    <h2 id="section-9"><span class="section-num">09</span> OpenTelemetry Setup for vLLM</h2>
+    <h2 id="section-12"><span class="section-num">12</span> OpenTelemetry Setup for vLLM</h2>
 
     <p>This section provides a concrete, end-to-end example of instrumenting a vLLM deployment with OpenTelemetry and exporting traces to Jaeger. The setup has three components: enabling OTel in vLLM itself, deploying the OpenTelemetry Collector as a sidecar or DaemonSet, and deploying Jaeger for trace visualization.</p>
 
@@ -1256,7 +1499,7 @@
 
     <p>With this setup, vLLM sends traces via OTLP gRPC to the OpenTelemetry Collector, which batches, enriches, and forwards them to Jaeger. Open the Jaeger UI at port 16686 and you will see traces for each inference request, with spans for prefill, decode, and response streaming. From Grafana, you can link to Jaeger traces using the <code>traceID</code> exemplar label that vLLM attaches to its Prometheus histograms, creating a seamless flow from metric anomaly to individual trace.</p>
 
-    <h2 id="section-10"><span class="section-num">10</span> GPU Topology Monitoring</h2>
+    <h2 id="section-13"><span class="section-num">13</span> GPU Topology Monitoring</h2>
 
     <p>Modern GPU servers are not homogeneous compute pools. The physical interconnect topology between GPUs dramatically affects inference performance, and llm-d's scheduler is topology-aware for good reason. Understanding and monitoring GPU topology is essential for diagnosing performance anomalies that have no obvious cause at the application layer and that standard Kubernetes metrics cannot even represent.</p>
 
@@ -1284,7 +1527,7 @@
 
     <p>llm-d uses topology information actively for scheduling decisions. When placing a new model replica, the scheduler prefers GPU groups that are fully connected via NVLink within the same domain. When performing KV cache transfers for disaggregated prefill/decode architectures, the scheduler prefers transfer paths that traverse NVLink rather than PCIe to minimize transfer latency. Monitoring these scheduling decisions and correlating them with observed inference latency validates that topology-aware scheduling is actually delivering the expected performance benefits rather than just adding complexity.</p>
 
-    <h2 id="section-11"><span class="section-num">11</span> Cost Observability</h2>
+    <h2 id="section-14"><span class="section-num">14</span> Cost Observability</h2>
 
     <p>GPUs are the most expensive resource in your infrastructure stack. An H100 SXM instance costs roughly $30-40 per hour on major cloud providers, and when you are running a cluster of eight or sixteen of these machines, every single percentage point of utilization efficiency translates directly to thousands of dollars per month in savings or waste. Cost observability is not a nice-to-have feature for mature organizations. It is the metric layer that determines whether your LLM serving infrastructure is financially sustainable at scale or whether you are hemorrhaging money on underutilized hardware.</p>
 
@@ -1318,7 +1561,7 @@
       <strong>Cost Impact:</strong> In production llm-d deployments with high prompt reuse patterns, cache-aware routing typically reduces cost-per-token by 30-50% compared to naive round-robin load balancing. For a cluster spending $100K/month on GPU compute, that represents $30K-$50K in monthly savings from routing intelligence alone.
     </div>
 
-    <h2 id="section-12"><span class="section-num">12</span> Grafana Dashboard JSON</h2>
+    <h2 id="section-15"><span class="section-num">15</span> Grafana Dashboard JSON</h2>
 
     <p>Rather than building panels from scratch, you can import dashboard JSON directly into Grafana. The following snippet defines a TTFT panel that you can paste into any Grafana dashboard's JSON model. It includes the three key percentile queries (p50, p95, p99), appropriate color thresholds, and the time series visualization configuration.</p>
 
@@ -1404,7 +1647,7 @@
       <strong>Import Tip:</strong> To import the full dashboard, wrap this panel in a dashboard envelope: <code>{"dashboard": {"title": "llm-d Inference Overview", "panels": [ ... ]}}</code>. You can also use the Grafana HTTP API: <code>POST /api/dashboards/db</code> with the JSON body. The <code>${DS_PROMETHEUS}</code> variable will resolve automatically if you have a Prometheus data source configured.
     </div>
 
-    <h2 id="section-13"><span class="section-num">13</span> Production Dashboard Design Patterns</h2>
+    <h2 id="section-16"><span class="section-num">16</span> Production Dashboard Design Patterns</h2>
 
     <p>Building dashboards is easy. Building dashboards that people actually look at during a 2am incident and can parse in seconds under stress is a fundamentally different challenge. The difference lies in applying established design patterns that account for how humans process visual information when they are tired, stressed, and under time pressure. When your cluster is actively degrading and users are complaining, the on-call engineer needs to understand the situation in seconds, not minutes spent scrolling through fifty undifferentiated panels.</p>
 
@@ -1437,7 +1680,59 @@
       <strong>Design Principle:</strong> Every panel on your dashboard should answer exactly one question. If you cannot state the question a panel answers in a single sentence, the panel is trying to do too much. Split it into focused sub-panels or move secondary information to a drill-down dashboard one level deeper in the hierarchy.
     </div>
 
-    <h2 id="section-14"><span class="section-num">14</span> Bringing It All Together</h2>
+    <h2 id="section-17"><span class="section-num">17</span> Dashboard Anti-Patterns and Proven Layouts</h2>
+
+    <p>Even well-intentioned dashboard efforts can undermine observability if they fall into common traps. The following anti-patterns appear repeatedly in LLM inference monitoring setups, and each one reduces the dashboard's effectiveness during the moments when it matters most: active incidents under time pressure.</p>
+
+    <h3>Anti-Pattern: The Wall of Charts</h3>
+
+    <p>Cramming 40+ panels onto a single dashboard creates cognitive overload. During an incident, operators scroll endlessly trying to find the relevant panel, and the sheer density of information makes it impossible to distinguish signal from noise. The fix: limit overview dashboards to 8-12 panels maximum. Move detailed breakdowns to drill-down dashboards that are linked from the overview. Each panel should be large enough to read without squinting, with clear titles that state the question the panel answers.</p>
+
+    <h3>Anti-Pattern: Wrong Default Time Ranges</h3>
+
+    <p>Defaulting all dashboards to a 24-hour time range buries acute incidents in a sea of historical data. A TTFT spike that started 10 minutes ago is barely visible on a 24-hour chart. Conversely, defaulting to 5 minutes shows only the most recent data and removes the context needed to identify when a degradation started. The fix: use 1 hour as the default for operational dashboards and 6 hours for overview dashboards. Train operators to adjust the time range as part of their incident response workflow, zooming in to isolate the incident start and zooming out to identify patterns.</p>
+
+    <h3>Anti-Pattern: Missing Annotations</h3>
+
+    <p>Without deployment markers, scaling events, and incident annotations on time-series charts, operators cannot correlate metric changes with operational events. A sudden TTFT increase might coincide perfectly with a model version deployment, but without an annotation marking that deployment, the operator has to check deployment logs manually to discover the correlation. The fix: annotate every deployment, configuration change, scaling event, and incident start/end on all dashboards. Grafana supports annotations via the HTTP API, and most CI/CD pipelines can push an annotation as a post-deployment step.</p>
+
+    <h3>Anti-Pattern: Inconsistent Color Thresholds</h3>
+
+    <p>When one panel uses green below 50% and another panel uses green below 80% for the same metric type, operators lose the ability to scan dashboards by color. Color should communicate severity instantly, without requiring the operator to read axis labels and mentally calculate whether a value is concerning. The fix: define a color standard for your team (for example, green below 60% GPU utilization, amber between 60-85%, red above 85%) and apply it consistently across every dashboard that displays that metric.</p>
+
+    <h3>Anti-Pattern: Mixing Operational and Business Metrics</h3>
+
+    <p>Placing cost-per-token panels next to GPU utilization panels on the same dashboard serves two different audiences with conflicting time horizons. Operations engineers need real-time health signals; finance teams need daily and weekly cost trends. Mixing them produces a dashboard that satisfies neither audience. The fix: separate operational dashboards (latency, errors, saturation) from business dashboards (cost, utilization efficiency, capacity planning). Link between them for context, but do not combine them into a single view.</p>
+
+    <h3>Proven Layout: The llm-d Operations Console</h3>
+
+    <p>The recommended layout for an llm-d operations dashboard uses four rows, each answering a specific category of questions. This layout has been refined through real incident response and provides a balance between overview and detail.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label text">llm-d operations console layout</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code>Row 1: Health Overview (4 stat panels, single row)
+  [TTFT p99: stat]  [Error Rate %: stat]  [Cache Hit %: stat]  [Active Pods: stat]
+
+Row 2: Latency Detail (2 time-series panels)
+  [TTFT p50/p95/p99 over time]          [ITL p50/p95/p99 over time]
+
+Row 3: Resource Utilization (3 panels)
+  [GPU Memory % by pod: heatmap]  [Queue Depth by pod: bar]  [Tokens/sec: timeseries]
+
+Row 4: Routing and Cache (2 panels)
+  [EPP routing distribution: stacked bar]  [Cache eviction rate: timeseries]</code></pre>
+    </div>
+
+    <p>This four-row layout fits on a single screen at 1920x1080 resolution without scrolling. The top row provides instant health assessment through color-coded stat panels. The second row gives latency context for diagnosis. The third row shows resource state. The fourth row exposes routing and cache behavior. During an incident, operators read top to bottom: first confirm what is broken (row 1), then understand the latency impact (row 2), then check resource constraints (row 3), and finally investigate routing as a root cause (row 4).</p>
+
+    <div class="callout">
+      <strong>Layout Tip:</strong> Export your finalized dashboard layout as a JSON template and version-control it alongside your Prometheus rules and alert definitions. When the team agrees on a layout change, update the template and re-import it across all environments to maintain consistency between staging and production monitoring.
+    </div>
+
+    <h2 id="section-18"><span class="section-num">18</span> Bringing It All Together</h2>
 
     <p>LLM inference observability is not a solved problem that you can address by installing a Helm chart and walking away. It requires understanding the unique computational characteristics of autoregressive token generation, the cascading failure modes of KV cache management under memory pressure, the cost dynamics of GPU compute at scale, and the topology constraints of modern multi-GPU servers. Standard Kubernetes monitoring will not save you. It will actively mislead you by reporting healthy dashboards while your users experience multi-second latencies caused by problems that your monitoring stack cannot even represent.</p>
 
