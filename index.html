@@ -10,12 +10,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800;900&family=Red+Hat+Text:wght@300;400;500;600;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Red Hat Text',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+body{font-family:'Red Hat Text',sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden;display:flex}
 h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:#0a0e17}
 ::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#475569}
+
+/* Left Sidebar (Grafana-style) */
+.sidebar{width:48px;background:#080b12;border-right:1px solid #1e293b;display:flex;flex-direction:column;align-items:center;padding:8px 0;position:fixed;top:0;left:0;height:100vh;z-index:150}
+.sidebar-logo{width:32px;height:32px;margin-bottom:12px;display:flex;align-items:center;justify-content:center}
+.sidebar-logo svg{width:24px;height:24px}
+.sidebar-divider{width:24px;height:1px;background:#1e293b;margin:4px 0}
+.sidebar-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;transition:all .2s;color:#64748b;margin:2px 0;position:relative}
+.sidebar-icon:hover{background:#1e293b;color:#e2e8f0}
+.sidebar-icon.active{color:#3b82f6;background:rgba(59,130,246,0.1)}
+.sidebar-icon svg{width:18px;height:18px}
+.sidebar-icon .tooltip{position:absolute;left:48px;background:#1e293b;color:#e2e8f0;padding:4px 10px;border-radius:4px;font-size:.7rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:200}
+.sidebar-icon:hover .tooltip{opacity:1}
+.sidebar-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:4px}
+
+/* Main Content Area */
+.main-content{flex:1;margin-left:48px;display:flex;flex-direction:column;min-height:100vh}
 
 /* Top Bar */
 .top-bar{background:#111827;border-bottom:1px solid #1e293b;padding:0 20px;height:48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -25,6 +41,11 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 .live-badge{display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;color:#10b981}
 .live-dot{width:6px;height:6px;background:#10b981;border-radius:50%;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.7)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(16,185,129,0)}}
+.time-range-selector{display:flex;align-items:center;gap:0;border:1px solid #334155;border-radius:6px;overflow:hidden;height:28px}
+.time-range-btn{background:none;border:none;color:#94a3b8;padding:0 10px;height:100%;cursor:pointer;font-size:.7rem;font-weight:600;font-family:'Red Hat Text',sans-serif;transition:all .15s;border-right:1px solid #334155}
+.time-range-btn:last-child{border-right:none}
+.time-range-btn:hover{background:#1e293b;color:#e2e8f0}
+.time-range-btn.active{background:rgba(59,130,246,0.15);color:#3b82f6}
 .top-bar-center{display:flex;align-items:center;gap:20px;font-size:.8rem;color:#94a3b8}
 .top-bar-center .stat{display:flex;align-items:center;gap:6px}
 .top-bar-center .stat-val{color:#e2e8f0;font-weight:600;font-family:'Red Hat Mono',monospace}
@@ -35,6 +56,9 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 .top-bar-right a{color:#3b82f6;text-decoration:none;font-size:.8rem;font-weight:600;transition:color .2s}
 .top-bar-right a:hover{color:#60a5fa}
 .clock{font-family:'Red Hat Mono',monospace;font-size:.8rem;color:#94a3b8}
+.refresh-indicator{font-family:'Red Hat Mono',monospace;font-size:.68rem;color:#475569;display:flex;align-items:center;gap:4px}
+.refresh-indicator svg{width:12px;height:12px;animation:spin 2s linear infinite;color:#475569}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 /* Grid Layout */
 .dashboard{padding:12px;display:grid;gap:12px;grid-template-columns:1fr 1fr;grid-auto-rows:min-content}
@@ -44,6 +68,7 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 .panel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #1e293b;min-height:40px}
 .panel-header h3{font-size:.85rem;color:#94a3b8;font-weight:600;display:flex;align-items:center;gap:8px}
 .panel-header h3 .indicator{width:3px;height:16px;border-radius:2px;flex-shrink:0}
+.panel-header-right{display:flex;align-items:center;gap:8px}
 .panel-toggle{background:none;border:none;color:#64748b;cursor:pointer;font-size:.75rem;padding:2px 8px;border-radius:4px;transition:all .2s}
 .panel-toggle:hover{background:#1e293b;color:#e2e8f0}
 .panel-body{padding:16px;flex:1;overflow:auto;position:relative}
@@ -62,26 +87,37 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 .health-breakdown .hb-val{font-family:'Red Hat Mono',monospace;font-weight:600}
 
 /* GPU Topology */
+.gpu-topo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.gpu-topo-title{font-family:'Red Hat Display',sans-serif;font-size:.8rem;font-weight:700;color:#a78bfa;display:flex;align-items:center;gap:8px}
+.gpu-topo-title .chip-badge{background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:700}
 .gpu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .numa-node{background:#0a0e17;border:1px solid #1e293b;border-radius:8px;padding:12px}
 .numa-label{font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .numa-label .cpu-tag{background:rgba(139,92,246,0.15);color:#a78bfa;padding:1px 6px;border-radius:4px;font-size:.65rem}
-.gpu-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.gpu-2x4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .gpu-card{background:#111827;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;cursor:pointer;transition:all .2s}
 .gpu-card:hover{border-color:#3b82f6;box-shadow:0 0 12px rgba(59,130,246,0.15)}
-.gpu-card .gpu-name{font-size:.7rem;color:#94a3b8;font-weight:600;margin-bottom:4px}
+.gpu-card .gpu-name{font-size:.7rem;color:#94a3b8;font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.gpu-card .gpu-temp{font-family:'Red Hat Mono',monospace;font-size:.65rem;font-weight:600}
 .gpu-card .gpu-util-bar{height:6px;background:#1e293b;border-radius:3px;overflow:hidden;margin-bottom:3px}
 .gpu-card .gpu-util-fill{height:100%;border-radius:3px;transition:width .5s,background .5s}
 .gpu-card .gpu-stats{display:flex;justify-content:space-between;font-size:.65rem;color:#64748b}
 .gpu-card .gpu-stats .val{font-family:'Red Hat Mono',monospace;color:#e2e8f0}
-.nvlink-line{text-align:center;font-size:.6rem;color:#8b5cf6;padding:2px 0;position:relative}
-.nvlink-line::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,#8b5cf6,transparent);margin:0 20%}
+.nvlink-section{text-align:center;font-size:.6rem;color:#8b5cf6;padding:4px 0;position:relative;margin:4px 0}
+.nvlink-section::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,#8b5cf6,transparent);margin:0 10%}
+.nvlink-bw{font-family:'Red Hat Mono',monospace;color:#a78bfa;font-size:.6rem;margin-top:2px}
+.pcie-bridge{text-align:center;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pcie-bridge-line{width:60%;height:2px;background:linear-gradient(90deg,#1e293b,#3b82f6,#1e293b);border-radius:1px}
+.pcie-bridge-label{font-size:.6rem;color:#3b82f6;font-family:'Red Hat Mono',monospace}
 
 /* Metrics Charts */
 .charts-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .chart-card{background:#0a0e17;border:1px solid #1e293b;border-radius:8px;padding:10px 12px}
 .chart-label{font-size:.7rem;color:#64748b;font-weight:600;margin-bottom:2px}
 .chart-value{font-family:'Red Hat Mono',monospace;font-size:1.1rem;font-weight:700;margin-bottom:6px}
+.chart-wrap{position:relative}
+.chart-y-axis{position:absolute;left:0;top:0;bottom:0;width:36px;display:flex;flex-direction:column;justify-content:space-between;font-family:'Red Hat Mono',monospace;font-size:.55rem;color:#475569;pointer-events:none}
+.chart-y-axis span{text-align:right;padding-right:4px}
 .chart-canvas{width:100%;height:60px}
 
 /* Pod Cards */
@@ -139,37 +175,104 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 .wf-bar-fill{height:100%;border-radius:2px;position:absolute;top:0;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:600;color:rgba(255,255,255,.9);white-space:nowrap;min-width:20px}
 
 /* Log Viewer */
-.log-controls{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.log-terminal{background:rgba(0,0,0,0.5);border:1px solid #1e293b;border-radius:6px;padding:8px;position:relative}
+.log-terminal-bar{display:flex;align-items:center;gap:6px;padding:4px 8px;background:#0d1117;border-radius:4px 4px 0 0;margin:-8px -8px 8px -8px;border-bottom:1px solid #1e293b}
+.log-terminal-dots{display:flex;gap:5px}
+.log-terminal-dots span{width:8px;height:8px;border-radius:50%}
+.log-terminal-prompt{flex:1}
+.log-terminal-prompt input{width:100%;background:none;border:none;color:#10b981;font-family:'Red Hat Mono',monospace;font-size:.72rem;outline:none}
+.log-terminal-prompt input::placeholder{color:#334155}
+.log-controls{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
 .log-filter-btn{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:.7rem;font-weight:600;transition:all .2s}
 .log-filter-btn:hover,.log-filter-btn.active{color:#e2e8f0;border-color:#3b82f6}
 .log-filter-btn.active{background:rgba(59,130,246,0.15)}
 .log-search{background:#0a0e17;border:1px solid #334155;color:#e2e8f0;padding:4px 10px;border-radius:4px;font-size:.75rem;font-family:'Red Hat Text',sans-serif;flex:1;min-width:120px}
 .log-search:focus{outline:none;border-color:#3b82f6}
-.log-entries{max-height:240px;overflow-y:auto;font-family:'Red Hat Mono',monospace;font-size:.72rem;line-height:1.6}
-.log-line{padding:1px 0;border-bottom:1px solid rgba(30,41,59,0.5)}
+.log-action-btn{background:none;border:1px solid #334155;color:#64748b;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:.68rem;font-weight:600;font-family:'Red Hat Text',sans-serif;transition:all .2s}
+.log-action-btn:hover{border-color:#3b82f6;color:#3b82f6}
+.log-action-btn.active{background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#3b82f6}
+.log-entries{max-height:240px;overflow-y:auto;font-family:'Red Hat Mono',monospace;font-size:.72rem;line-height:1.6;counter-reset:logline}
+.log-line{padding:1px 0;border-bottom:1px solid rgba(30,41,59,0.3);display:flex;gap:8px}
 .log-line.hidden{display:none}
+.log-line-num{color:#334155;min-width:28px;text-align:right;user-select:none;flex-shrink:0;font-size:.65rem}
 .log-time{color:#64748b}
 .log-level-info{color:#3b82f6}
 .log-level-warn{color:#f59e0b}
 .log-level-error{color:#ef4444}
 .log-msg{color:#cbd5e1}
+.log-source-vllm{color:#06b6d4}
+.log-source-epp{color:#a78bfa}
+.log-source-kubelet{color:#f97316}
+.log-source-cluster{color:#10b981}
+.log-source-fabric{color:#ec4899}
 
 /* Alert Panel */
-.alert-inject-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.alert-header-info{display:flex;align-items:center;gap:10px}
+.alert-sev-counts{display:flex;gap:8px;font-size:.7rem;font-family:'Red Hat Mono',monospace;font-weight:600}
+.alert-sev-count{display:flex;align-items:center;gap:3px}
+.alert-sev-count.crit{color:#ef4444}
+.alert-sev-count.warn{color:#f59e0b}
+.alert-inject-btns{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
 .inject-btn{background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600;transition:all .2s;font-family:'Red Hat Text',sans-serif}
 .inject-btn:hover{border-color:#ef4444;color:#ef4444}
 .inject-btn:active{transform:scale(.97)}
+.sound-toggle{background:none;border:1px solid #334155;color:#64748b;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;display:flex;align-items:center;gap:4px;font-family:'Red Hat Text',sans-serif;transition:all .2s}
+.sound-toggle:hover{border-color:#f59e0b;color:#f59e0b}
+.sound-toggle.on{border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,0.1)}
 .alert-list{max-height:200px;overflow-y:auto}
-.alert-entry{padding:8px 10px;background:#0a0e17;border-radius:6px;margin-bottom:6px;border-left:3px solid #3b82f6;font-size:.78rem}
+.alert-entry{padding:8px 10px;background:#0a0e17;border-radius:6px;margin-bottom:6px;border-left:3px solid #3b82f6;font-size:.78rem;position:relative}
 .alert-entry.critical{border-left-color:#ef4444;background:rgba(239,68,68,0.05)}
 .alert-entry.warning{border-left-color:#f59e0b;background:rgba(245,158,11,0.05)}
-.alert-entry .alert-head{display:flex;justify-content:space-between;margin-bottom:3px}
+.alert-entry.acknowledged{opacity:.7}
+.alert-entry.resolved{opacity:.4;border-left-color:#10b981;background:rgba(16,185,129,0.03)}
+.alert-entry .alert-head{display:flex;justify-content:space-between;margin-bottom:3px;align-items:center}
 .alert-entry .alert-sev{font-weight:700;font-size:.7rem;text-transform:uppercase}
 .alert-entry .alert-sev.critical{color:#ef4444}
 .alert-entry .alert-sev.warning{color:#f59e0b}
 .alert-entry .alert-time{font-family:'Red Hat Mono',monospace;color:#64748b;font-size:.68rem}
 .alert-entry .alert-desc{color:#cbd5e1;margin-bottom:3px}
-.alert-entry .alert-remed{color:#64748b;font-size:.72rem;font-style:italic}
+.alert-entry .alert-remed{color:#64748b;font-size:.72rem;font-style:italic;margin-bottom:6px}
+.alert-actions{display:flex;gap:6px}
+.alert-action-btn{background:none;border:1px solid #334155;color:#94a3b8;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:.65rem;font-weight:600;font-family:'Red Hat Text',sans-serif;transition:all .15s}
+.alert-action-btn:hover{border-color:#3b82f6;color:#3b82f6}
+.alert-action-btn.ack:hover{border-color:#f59e0b;color:#f59e0b}
+.alert-action-btn.resolve:hover{border-color:#10b981;color:#10b981}
+.alert-timeline{margin-bottom:10px;padding:8px;background:#0a0e17;border-radius:6px;border:1px solid #1e293b}
+.alert-timeline-title{font-size:.7rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.alert-timeline-title svg{width:12px;height:12px}
+.timeline-entries{display:flex;flex-direction:column;gap:0}
+.timeline-entry{display:flex;gap:8px;font-size:.68rem;padding:3px 0;position:relative}
+.timeline-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.timeline-dot.firing{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,0.5)}
+.timeline-dot.ack{background:#f59e0b}
+.timeline-dot.resolved{background:#10b981}
+.timeline-line{position:absolute;left:3.5px;top:12px;bottom:-4px;width:1px;background:#1e293b}
+.timeline-content{flex:1}
+.timeline-time{color:#475569;font-family:'Red Hat Mono',monospace}
+.timeline-desc{color:#94a3b8}
+
+/* EPP Routing Panel */
+.epp-routing-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.epp-strategy{display:flex;align-items:center;gap:8px}
+.epp-strategy-badge{background:rgba(139,92,246,0.15);color:#a78bfa;padding:3px 10px;border-radius:4px;font-size:.68rem;font-weight:700;font-family:'Red Hat Mono',monospace}
+.epp-routing-list{max-height:220px;overflow-y:auto}
+.epp-route-entry{display:flex;align-items:center;gap:10px;padding:6px 10px;background:#0a0e17;border-radius:6px;margin-bottom:4px;font-size:.72rem;font-family:'Red Hat Mono',monospace;border:1px solid #1e293b;transition:border-color .3s}
+.epp-route-entry.new{border-color:rgba(139,92,246,0.4);animation:routeFade 2s ease-out}
+@keyframes routeFade{0%{background:rgba(139,92,246,0.1);border-color:#a78bfa}100%{background:#0a0e17;border-color:#1e293b}}
+.epp-route-req{color:#3b82f6;font-weight:600;min-width:80px}
+.epp-route-arrow{color:#334155}
+.epp-route-pod{color:#10b981;font-weight:600;min-width:80px}
+.epp-route-detail{color:#64748b;font-size:.65rem;display:flex;gap:12px}
+.epp-route-detail .cache-val{color:#a78bfa}
+.epp-route-detail .score-val{color:#f59e0b}
+.epp-prefix-match{display:flex;align-items:center;gap:6px;margin-top:10px;padding:6px 10px;background:#0a0e17;border-radius:6px;border:1px solid #1e293b;font-size:.68rem}
+.epp-prefix-label{color:#64748b;font-weight:600}
+.epp-prefix-hash{font-family:'Red Hat Mono',monospace;color:#a78bfa;font-size:.65rem}
+
+/* Alert Flash Overlay */
+.alert-flash{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;pointer-events:none;opacity:0;background:rgba(239,68,68,0.15);transition:opacity .1s}
+.alert-flash.active{opacity:1;animation:alertFlash .6s ease-out}
+@keyframes alertFlash{0%{opacity:.8;background:rgba(239,68,68,0.25)}20%{opacity:.4}40%{opacity:.6}60%{opacity:.2}80%{opacity:.4}100%{opacity:0}}
 
 /* Network Fabric */
 .fabric-container{position:relative;height:180px}
@@ -177,16 +280,69 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 
 /* Responsive */
 @media(max-width:1200px){.charts-row{grid-template-columns:repeat(2,1fr)}.pods-grid{grid-template-columns:repeat(2,1fr)}.gpu-grid{grid-template-columns:1fr}}
-@media(max-width:800px){.dashboard{grid-template-columns:1fr}.charts-row{grid-template-columns:1fr}.pods-grid{grid-template-columns:1fr}.top-bar-center{display:none}}
+@media(max-width:800px){.dashboard{grid-template-columns:1fr}.charts-row{grid-template-columns:1fr}.pods-grid{grid-template-columns:1fr}.top-bar-center{display:none}.sidebar{display:none}.main-content{margin-left:0}.time-range-selector{display:none}}
 </style>
 </head>
 <body>
+
+<!-- Alert Flash Overlay -->
+<div class="alert-flash" id="alertFlash"></div>
+
+<!-- Left Sidebar (Grafana-style) -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <svg viewBox="0 0 100 100" fill="none"><path fill="#3b82f6" d="M50 10L90 30v40L50 90 10 70V30z"/></svg>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-icon active" title="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span class="tooltip">Dashboard</span>
+  </div>
+  <div class="sidebar-icon" title="Alerts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span class="tooltip">Alerts</span>
+  </div>
+  <div class="sidebar-icon" title="Explore">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+    <span class="tooltip">Explore</span>
+  </div>
+  <div class="sidebar-icon" title="GPU Topology">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+    <span class="tooltip">GPU Topology</span>
+  </div>
+  <div class="sidebar-icon" title="Network">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="tooltip">Network</span>
+  </div>
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-icon" title="Logs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <span class="tooltip">Logs</span>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-icon" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="tooltip">Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
 
 <!-- Top Status Bar -->
 <div class="top-bar">
   <div class="top-bar-left">
     <div class="cluster-name"><span>llm-d</span> Production Cluster</div>
     <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+    <div class="time-range-selector">
+      <button class="time-range-btn" onclick="setTimeRange(this)">15m</button>
+      <button class="time-range-btn" onclick="setTimeRange(this)">1h</button>
+      <button class="time-range-btn active" onclick="setTimeRange(this)">6h</button>
+      <button class="time-range-btn" onclick="setTimeRange(this)">24h</button>
+      <button class="time-range-btn" onclick="setTimeRange(this)">7d</button>
+    </div>
   </div>
   <div class="top-bar-center">
     <div class="stat">Uptime <span class="stat-val" id="uptime">0d 0h 0m</span></div>
@@ -198,6 +354,10 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
     <a href="https://markellr-redhat.github.io/llm-d-content-hub/">Content Hub</a>
     <a href="blog/">Blog</a>
     <span class="clock" id="clock">--:--:--</span>
+    <span class="refresh-indicator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      2s
+    </span>
   </div>
 </div>
 
@@ -236,17 +396,28 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
     <button class="panel-toggle" onclick="togglePanel(this)">collapse</button>
   </div>
   <div class="panel-body">
+    <div class="gpu-topo-header">
+      <div class="gpu-topo-title">
+        DGX H100 Node
+        <span class="chip-badge">8x H100 80GB SXM5</span>
+      </div>
+    </div>
     <div class="gpu-grid">
       <div class="numa-node">
-        <div class="numa-label">NUMA Node 0 <span class="cpu-tag">CPU 0-31</span></div>
-        <div class="gpu-row" id="numa0-gpus"></div>
-        <div class="nvlink-line">NVLink 4.0 Mesh</div>
+        <div class="numa-label">NUMA Node 0 <span class="cpu-tag">CPU 0-55</span></div>
+        <div class="gpu-2x4" id="numa0-gpus"></div>
+        <div class="nvlink-section">NVLink 4.0 Mesh<div class="nvlink-bw" id="nvlink0-bw">-- GB/s per link</div></div>
       </div>
       <div class="numa-node">
-        <div class="numa-label">NUMA Node 1 <span class="cpu-tag">CPU 32-63</span></div>
-        <div class="gpu-row" id="numa1-gpus"></div>
-        <div class="nvlink-line">NVLink 4.0 Mesh</div>
+        <div class="numa-label">NUMA Node 1 <span class="cpu-tag">CPU 56-111</span></div>
+        <div class="gpu-2x4" id="numa1-gpus"></div>
+        <div class="nvlink-section">NVLink 4.0 Mesh<div class="nvlink-bw" id="nvlink1-bw">-- GB/s per link</div></div>
       </div>
+    </div>
+    <div class="pcie-bridge">
+      <div class="pcie-bridge-line"></div>
+      <div class="pcie-bridge-label">PCIe Gen5 x16 &middot; Inter-NUMA NVSwitch</div>
+      <div class="pcie-bridge-line"></div>
     </div>
   </div>
 </div>
@@ -262,22 +433,34 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
       <div class="chart-card">
         <div class="chart-label">TTFT (ms)</div>
         <div class="chart-value" id="ttftValue" style="color:#10b981">--</div>
-        <canvas class="chart-canvas" id="chartTTFT"></canvas>
+        <div class="chart-wrap">
+          <div class="chart-y-axis" id="yAxisTTFT"><span>--</span><span>--</span><span>--</span><span>0</span></div>
+          <canvas class="chart-canvas" id="chartTTFT"></canvas>
+        </div>
       </div>
       <div class="chart-card">
         <div class="chart-label">Throughput (tok/s)</div>
         <div class="chart-value" id="throughputValue" style="color:#3b82f6">--</div>
-        <canvas class="chart-canvas" id="chartThroughput"></canvas>
+        <div class="chart-wrap">
+          <div class="chart-y-axis" id="yAxisThroughput"><span>--</span><span>--</span><span>--</span><span>0</span></div>
+          <canvas class="chart-canvas" id="chartThroughput"></canvas>
+        </div>
       </div>
       <div class="chart-card">
         <div class="chart-label">Cache Hit Ratio</div>
         <div class="chart-value" id="cacheValue" style="color:#8b5cf6">--</div>
-        <canvas class="chart-canvas" id="chartCache"></canvas>
+        <div class="chart-wrap">
+          <div class="chart-y-axis" id="yAxisCache"><span>100%</span><span>66%</span><span>33%</span><span>0%</span></div>
+          <canvas class="chart-canvas" id="chartCache"></canvas>
+        </div>
       </div>
       <div class="chart-card">
         <div class="chart-label">Error Rate</div>
         <div class="chart-value" id="errorValue" style="color:#10b981">--</div>
-        <canvas class="chart-canvas" id="chartError"></canvas>
+        <div class="chart-wrap">
+          <div class="chart-y-axis" id="yAxisError"><span>--</span><span>--</span><span>--</span><span>0%</span></div>
+          <canvas class="chart-canvas" id="chartError"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -294,7 +477,27 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
   </div>
 </div>
 
-<!-- Row 4: Waterfall + Logs -->
+<!-- Row 4: EPP Routing + Waterfall -->
+<div class="panel">
+  <div class="panel-header">
+    <h3><span class="indicator" style="background:#a78bfa"></span>EPP Routing</h3>
+    <button class="panel-toggle" onclick="togglePanel(this)">collapse</button>
+  </div>
+  <div class="panel-body">
+    <div class="epp-routing-header">
+      <div class="epp-strategy">
+        <span style="font-size:.72rem;color:#64748b">Strategy:</span>
+        <span class="epp-strategy-badge">load-aware-prefix-cache</span>
+      </div>
+    </div>
+    <div class="epp-routing-list" id="eppRoutingList"></div>
+    <div class="epp-prefix-match" id="eppPrefixMatch">
+      <span class="epp-prefix-label">Last prefix match:</span>
+      <span class="epp-prefix-hash">--</span>
+    </div>
+  </div>
+</div>
+
 <div class="panel">
   <div class="panel-header">
     <h3><span class="indicator" style="background:#06b6d4"></span>Request Traces</h3>
@@ -305,27 +508,52 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
   </div>
 </div>
 
-<div class="panel">
+<!-- Row 5: Logs -->
+<div class="panel span-full">
   <div class="panel-header">
     <h3><span class="indicator" style="background:#f59e0b"></span>Inference Logs</h3>
-    <button class="panel-toggle" onclick="togglePanel(this)">collapse</button>
+    <div class="panel-header-right">
+      <button class="log-action-btn active" id="autoScrollBtn" onclick="toggleAutoScroll(this)">Auto-scroll</button>
+      <button class="log-action-btn" onclick="clearLogs()">Clear</button>
+      <button class="log-action-btn" onclick="exportLogs()">Export</button>
+      <button class="panel-toggle" onclick="togglePanel(this)">collapse</button>
+    </div>
   </div>
   <div class="panel-body">
-    <div class="log-controls">
-      <button class="log-filter-btn active" data-level="all" onclick="setLogFilter('all',this)">All</button>
-      <button class="log-filter-btn" data-level="INFO" onclick="setLogFilter('INFO',this)">INFO</button>
-      <button class="log-filter-btn" data-level="WARN" onclick="setLogFilter('WARN',this)">WARN</button>
-      <button class="log-filter-btn" data-level="ERROR" onclick="setLogFilter('ERROR',this)">ERROR</button>
-      <input type="text" class="log-search" placeholder="Search logs..." oninput="filterLogs()">
+    <div class="log-terminal">
+      <div class="log-terminal-bar">
+        <div class="log-terminal-dots">
+          <span style="background:#ef4444"></span>
+          <span style="background:#f59e0b"></span>
+          <span style="background:#10b981"></span>
+        </div>
+        <div class="log-terminal-prompt">
+          <input type="text" placeholder="$ kubectl logs -f deployment/vllm --all-containers | grep -i" id="kubectlPrompt" onkeydown="if(event.key==='Enter')handleKubectl(this.value)">
+        </div>
+      </div>
+      <div class="log-controls">
+        <button class="log-filter-btn active" data-level="all" onclick="setLogFilter('all',this)">All</button>
+        <button class="log-filter-btn" data-level="INFO" onclick="setLogFilter('INFO',this)">INFO</button>
+        <button class="log-filter-btn" data-level="WARN" onclick="setLogFilter('WARN',this)">WARN</button>
+        <button class="log-filter-btn" data-level="ERROR" onclick="setLogFilter('ERROR',this)">ERROR</button>
+        <input type="text" class="log-search" placeholder="Search logs..." oninput="filterLogs()">
+      </div>
+      <div class="log-entries" id="logEntries"></div>
     </div>
-    <div class="log-entries" id="logEntries"></div>
   </div>
 </div>
 
-<!-- Row 5: Alerts + Network Fabric -->
+<!-- Row 6: Alerts + Network Fabric -->
 <div class="panel">
   <div class="panel-header">
-    <h3><span class="indicator" style="background:#ef4444"></span>Alerts</h3>
+    <h3>
+      <span class="indicator" style="background:#ef4444"></span>
+      Alerts
+      <span class="alert-sev-counts" id="alertSevCounts">
+        <span class="alert-sev-count crit" id="critCount" style="display:none">0 crit</span>
+        <span class="alert-sev-count warn" id="warnCount" style="display:none">0 warn</span>
+      </span>
+    </h3>
     <button class="panel-toggle" onclick="togglePanel(this)">collapse</button>
   </div>
   <div class="panel-body">
@@ -333,6 +561,18 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
       <button class="inject-btn" onclick="injectAnomaly('latency')">Inject Latency Spike</button>
       <button class="inject-btn" onclick="injectAnomaly('oom')">Inject GPU OOM</button>
       <button class="inject-btn" onclick="injectAnomaly('crash')">Inject Pod Crash</button>
+      <button class="inject-btn" onclick="injectAnomaly('cache')">Inject Cache Storm</button>
+      <button class="sound-toggle" id="soundToggle" onclick="toggleSound(this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15" id="soundOff1"/><line x1="17" y1="9" x2="23" y2="15" id="soundOff2"/></svg>
+        Sound Off
+      </button>
+    </div>
+    <div class="alert-timeline" id="alertTimeline" style="display:none">
+      <div class="alert-timeline-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Incident Timeline
+      </div>
+      <div class="timeline-entries" id="timelineEntries"></div>
     </div>
     <div class="alert-list" id="alertList"></div>
   </div>
@@ -352,14 +592,16 @@ h1,h2,h3,h4,h5{font-family:'Red Hat Display',sans-serif;font-weight:700}
 
 </div><!-- end dashboard -->
 
-<!-- Pod Detail Modal -->
-<div class="pod-detail-overlay" id="podDetailOverlay" onclick="if(event.target===this)closePodDetail()">
-  <div class="pod-detail" id="podDetailContent"></div>
-</div>
-
 <!-- Footer -->
 <div style="text-align:center;padding:16px;color:#64748b;font-size:.78rem;border-top:1px solid #1e293b">
   Markell Rawls &middot; <a href="https://markellr-redhat.github.io/llm-d-content-hub/" style="color:#3b82f6;text-decoration:none">llm-d Content Hub</a> &middot; <a href="blog/" style="color:#3b82f6;text-decoration:none">Read the Blog</a>
+</div>
+
+</div><!-- end main-content -->
+
+<!-- Pod Detail Modal -->
+<div class="pod-detail-overlay" id="podDetailOverlay" onclick="if(event.target===this)closePodDetail()">
+  <div class="pod-detail" id="podDetailContent"></div>
 </div>
 
 <script>
@@ -372,8 +614,13 @@ const SIM = {
   anomaly: null,
   anomalyEnd: 0,
   alertCount: 0,
+  criticalCount: 0,
+  warningCount: 0,
   logFilter: 'all',
   logSearch: '',
+  logLineCounter: 0,
+  autoScroll: true,
+  soundOn: false,
   pods: [
     {id:0,name:'vllm-pod-0',model:'llama-3.1-70b',adapters:['lora-finance-v2'],health:'healthy',gpuUtil:42,gpuMem:51.2,gpuTotal:80,kvCache:62,activeReqs:3,queue:1,gpuHistory:[]},
     {id:1,name:'vllm-pod-1',model:'llama-3.1-70b',adapters:['lora-code-v1'],health:'healthy',gpuUtil:38,gpuMem:48.7,gpuTotal:80,kvCache:58,activeReqs:2,queue:0,gpuHistory:[]},
@@ -390,13 +637,15 @@ const SIM = {
   traces: [],
   logs: [],
   alerts: [],
+  eppRoutes: [],
+  timelineEvents: [],
   networkBw: [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 };
 
-// Init GPUs
+// Init GPUs (8x H100 in DGX layout)
 for(let n=0;n<2;n++){
   for(let g=0;g<4;g++){
-    SIM.gpus.push({id:n*4+g,numa:n,util:30+Math.random()*30,mem:40+Math.random()*20,memTotal:80,temp:55+Math.random()*15});
+    SIM.gpus.push({id:n*4+g,numa:n,util:30+Math.random()*30,mem:40+Math.random()*20,memTotal:80,temp:55+Math.random()*15,nvlinkBw:380+Math.random()*70});
   }
 }
 
@@ -420,8 +669,18 @@ function fmtMs(d){
   return h+':'+m+':'+s+'.'+ms;
 }
 function barColor(pct){return pct>80?'#ef4444':pct>50?'#f59e0b':'#10b981'}
+function tempColor(t){return t>80?'#ef4444':t>65?'#f59e0b':'#10b981'}
 function reqId(){return 'req-'+Math.random().toString(36).substring(2,8)}
+function prefixHash(){return '0x'+Math.random().toString(16).substring(2,10)}
 const STAGE_COLORS={Gateway:'#3b82f6',EPP:'#8b5cf6',Prefill:'#06b6d4',KVTransfer:'#a78bfa',Decode:'#10b981',Response:'#3b82f6'};
+
+// ============================================================
+// TIME RANGE SELECTOR (visual only)
+// ============================================================
+function setTimeRange(btn){
+  document.querySelectorAll('.time-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
 // ============================================================
 // PANEL TOGGLE
@@ -450,22 +709,29 @@ function renderGPUs(){
   for(let n=0;n<2;n++){
     const container=document.getElementById('numa'+n+'-gpus');
     container.innerHTML='';
+    let totalBw=0;
     for(let g=0;g<4;g++){
       const gpu=SIM.gpus[n*4+g];
+      totalBw+=gpu.nvlinkBw;
       const card=document.createElement('div');
       card.className='gpu-card';
       card.onclick=()=>showGPUDetail(gpu);
       card.innerHTML=`
-        <div class="gpu-name">GPU ${gpu.id} (A100 80GB)</div>
+        <div class="gpu-name">
+          <span>GPU ${gpu.id} (H100 80GB)</span>
+          <span class="gpu-temp" style="color:${tempColor(gpu.temp)}">${fmt(gpu.temp,0)}&deg;C</span>
+        </div>
         <div class="gpu-util-bar"><div class="gpu-util-fill" style="width:${gpu.util}%;background:${barColor(gpu.util)}"></div></div>
         <div class="gpu-stats"><span>Util <span class="val">${fmt(gpu.util,0)}%</span></span><span>Mem <span class="val">${fmt(gpu.mem,1)}/${gpu.memTotal}G</span></span></div>
       `;
       container.appendChild(card);
     }
+    const avgBw=totalBw/4;
+    document.getElementById('nvlink'+n+'-bw').textContent=fmt(avgBw,0)+' GB/s per link';
   }
 }
 function showGPUDetail(gpu){
-  alert('GPU '+gpu.id+' | Util: '+fmt(gpu.util,1)+'% | Mem: '+fmt(gpu.mem,1)+'/'+gpu.memTotal+'GB | Temp: '+fmt(gpu.temp,0)+'C | NUMA: '+gpu.numa);
+  alert('GPU '+gpu.id+' (H100 80GB SXM5)\nUtil: '+fmt(gpu.util,1)+'%\nMem: '+fmt(gpu.mem,1)+'/'+gpu.memTotal+'GB\nTemp: '+fmt(gpu.temp,0)+'°C\nNVLink BW: '+fmt(gpu.nvlinkBw,0)+' GB/s\nNUMA: '+gpu.numa);
 }
 
 // ============================================================
@@ -505,7 +771,6 @@ function showPodDetail(podId){
   const memPct=(pod.gpuMem/pod.gpuTotal)*100;
   const arcLen=2*Math.PI*45;
   const offset=arcLen*(1-gpuPct/100);
-  // Sparkline data
   const hist=pod.gpuHistory.length?pod.gpuHistory:Array(30).fill(gpuPct);
   let sparkPath='';
   const sw=460,sh=36;
@@ -552,7 +817,7 @@ function closePodDetail(){document.getElementById('podDetailOverlay').classList.
 // CANVAS CHARTS
 // ============================================================
 const CHART_MAX=60;
-function drawChart(canvasId,dataArrays,colors,maxVal){
+function drawChart(canvasId,dataArrays,colors,maxVal,yAxisId,yUnit){
   const canvas=document.getElementById(canvasId);
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
@@ -572,10 +837,23 @@ function drawChart(canvasId,dataArrays,colors,maxVal){
       i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     });
     ctx.stroke();
-    // Fill
     ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
     ctx.fillStyle=colors[di]+'15';ctx.fill();
   });
+  // Update Y-axis labels
+  if(yAxisId){
+    const yAxis=document.getElementById(yAxisId);
+    if(yAxis){
+      const spans=yAxis.querySelectorAll('span');
+      const unit=yUnit||'';
+      if(spans.length>=4){
+        spans[0].textContent=fmt(maxVal,0)+unit;
+        spans[1].textContent=fmt(maxVal*0.66,0)+unit;
+        spans[2].textContent=fmt(maxVal*0.33,0)+unit;
+        spans[3].textContent='0'+unit;
+      }
+    }
+  }
 }
 
 // ============================================================
@@ -603,6 +881,8 @@ function addTrace(){
   SIM.traces.unshift(trace);
   if(SIM.traces.length>12)SIM.traces.pop();
   renderTraces();
+  // Add EPP routing entry
+  addEPPRoute(trace);
   return trace;
 }
 
@@ -630,10 +910,66 @@ function renderTraces(){
 }
 
 // ============================================================
+// EPP ROUTING PANEL
+// ============================================================
+function addEPPRoute(trace){
+  const healthyPods=SIM.pods.filter(p=>p.health==='healthy');
+  const pod=healthyPods[Math.floor(Math.random()*healthyPods.length)];
+  const cacheScore=Math.floor(rng(40,99));
+  const totalScore=fmt(rng(50,98),1);
+  const route={
+    reqId:trace.id,
+    podName:pod.name,
+    cacheScore:cacheScore,
+    totalScore:totalScore,
+    time:new Date(),
+    isNew:true
+  };
+  SIM.eppRoutes.unshift(route);
+  if(SIM.eppRoutes.length>10)SIM.eppRoutes.pop();
+  renderEPPRoutes();
+  // Update prefix match
+  if(trace.cacheHit){
+    document.getElementById('eppPrefixMatch').querySelector('.epp-prefix-hash').textContent=
+      prefixHash()+' -> '+pod.name+' ('+cacheScore+'% match)';
+  }
+  // Clear "new" class after animation
+  setTimeout(()=>{route.isNew=false;},2100);
+}
+
+function renderEPPRoutes(){
+  const list=document.getElementById('eppRoutingList');
+  list.innerHTML='';
+  SIM.eppRoutes.forEach(r=>{
+    const el=document.createElement('div');
+    el.className='epp-route-entry'+(r.isNew?' new':'');
+    el.innerHTML=`
+      <span class="epp-route-req">${r.reqId}</span>
+      <span class="epp-route-arrow">→</span>
+      <span class="epp-route-pod">${r.podName}</span>
+      <span class="epp-route-detail">
+        <span>cache: <span class="cache-val">${r.cacheScore}%</span></span>
+        <span>score: <span class="score-val">${r.totalScore}</span></span>
+      </span>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ============================================================
 // LOG VIEWER
 // ============================================================
+function getLogSource(msg){
+  if(msg.includes('vllm.engine'))return 'vllm';
+  if(msg.includes('llm-d.epp'))return 'epp';
+  if(msg.includes('kubelet'))return 'kubelet';
+  if(msg.includes('llm-d.cluster'))return 'cluster';
+  if(msg.includes('llm-d.fabric'))return 'fabric';
+  return '';
+}
 function addLog(level,msg){
-  const entry={time:new Date(),level,msg};
+  SIM.logLineCounter++;
+  const entry={time:new Date(),level,msg,lineNum:SIM.logLineCounter};
   SIM.logs.unshift(entry);
   if(SIM.logs.length>200)SIM.logs.pop();
   renderLogEntry(entry,true);
@@ -644,12 +980,24 @@ function renderLogEntry(entry,prepend){
   el.className='log-line';
   el.dataset.level=entry.level;
   const levelClass=entry.level==='ERROR'?'log-level-error':entry.level==='WARN'?'log-level-warn':'log-level-info';
-  el.innerHTML=`<span class="log-time">[${fmtMs(entry.time)}]</span> <span class="${levelClass}">${entry.level.padEnd(5)}</span> <span class="log-msg">${entry.msg}</span>`;
-  // Apply filter
+  const source=getLogSource(entry.msg);
+  const sourceClass=source?'log-source-'+source:'';
+  // Color-code the source portion of the message
+  let displayMsg=entry.msg;
+  if(source==='vllm')displayMsg=entry.msg.replace('vllm.engine:','<span class="log-source-vllm">vllm.engine:</span>');
+  else if(source==='epp')displayMsg=entry.msg.replace('llm-d.epp:','<span class="log-source-epp">llm-d.epp:</span>');
+  else if(source==='kubelet')displayMsg=entry.msg.replace('kubelet:','<span class="log-source-kubelet">kubelet:</span>');
+  else if(source==='cluster')displayMsg=entry.msg.replace('llm-d.cluster:','<span class="log-source-cluster">llm-d.cluster:</span>');
+  else if(source==='fabric')displayMsg=entry.msg.replace('llm-d.fabric:','<span class="log-source-fabric">llm-d.fabric:</span>');
+  el.innerHTML=`<span class="log-line-num">${entry.lineNum}</span><span class="log-time">[${fmtMs(entry.time)}]</span> <span class="${levelClass}">${entry.level.padEnd(5)}</span> <span class="log-msg">${displayMsg}</span>`;
   if(SIM.logFilter!=='all'&&entry.level!==SIM.logFilter)el.classList.add('hidden');
   if(SIM.logSearch&&!entry.msg.toLowerCase().includes(SIM.logSearch.toLowerCase()))el.classList.add('hidden');
   if(prepend)container.insertBefore(el,container.firstChild);
   else container.appendChild(el);
+  // Auto-scroll
+  if(SIM.autoScroll&&prepend){
+    container.scrollTop=0;
+  }
 }
 function setLogFilter(level,btn){
   SIM.logFilter=level;
@@ -669,38 +1017,176 @@ function applyLogFilters(){
     el.classList.toggle('hidden',!show);
   });
 }
+function clearLogs(){
+  document.getElementById('logEntries').innerHTML='';
+  SIM.logs=[];
+  SIM.logLineCounter=0;
+}
+function exportLogs(){
+  const logText=SIM.logs.map(l=>`[${fmtMs(l.time)}] ${l.level.padEnd(5)} ${l.msg}`).join('\n');
+  const blob=new Blob([logText],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='llm-d-logs-'+new Date().toISOString().replace(/[:.]/g,'-')+'.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function toggleAutoScroll(btn){
+  SIM.autoScroll=!SIM.autoScroll;
+  btn.classList.toggle('active',SIM.autoScroll);
+}
+function handleKubectl(val){
+  // Use kubectl-prompt input as a log search filter
+  const parts=val.split('grep').pop();
+  if(parts){
+    const term=parts.replace(/[-i\s]/g,'').trim();
+    if(term){
+      SIM.logSearch=term;
+      document.querySelector('.log-search').value=term;
+      applyLogFilters();
+    }
+  }
+}
 
 // ============================================================
 // ALERTS
 // ============================================================
+function triggerAlertFlash(){
+  const flash=document.getElementById('alertFlash');
+  flash.classList.remove('active');
+  void flash.offsetWidth; // force reflow
+  flash.classList.add('active');
+  setTimeout(()=>flash.classList.remove('active'),700);
+}
+
 function fireAlert(severity,desc,remediation){
-  const entry={severity,desc,remediation,time:new Date()};
+  const entry={severity,desc,remediation,time:new Date(),status:'firing',id:'alert-'+Math.random().toString(36).substring(2,8)};
   SIM.alerts.unshift(entry);
   if(SIM.alerts.length>20)SIM.alerts.pop();
   SIM.alertCount++;
+  if(severity==='critical')SIM.criticalCount++;
+  if(severity==='warning')SIM.warningCount++;
+  // Add to timeline
+  addTimelineEvent('firing',desc,entry.time);
+  // Trigger flash for critical
+  if(severity==='critical')triggerAlertFlash();
   renderAlerts();
   updateAlertBadge();
+  updateSevCounts();
 }
 function renderAlerts(){
   const list=document.getElementById('alertList');
   list.innerHTML='';
-  SIM.alerts.forEach(a=>{
+  SIM.alerts.forEach((a,idx)=>{
     const el=document.createElement('div');
-    el.className='alert-entry '+a.severity;
-    el.innerHTML=`<div class="alert-head"><span class="alert-sev ${a.severity}">${a.severity}</span><span class="alert-time">${fmtMs(a.time)}</span></div><div class="alert-desc">${a.desc}</div><div class="alert-remed">${a.remediation}</div>`;
+    el.className='alert-entry '+a.severity+(a.status==='acknowledged'?' acknowledged':'')+(a.status==='resolved'?' resolved':'');
+    const statusLabel=a.status==='firing'?'':a.status==='acknowledged'?' [ACK]':' [RESOLVED]';
+    el.innerHTML=`
+      <div class="alert-head">
+        <span class="alert-sev ${a.severity}">${a.severity}${statusLabel}</span>
+        <span class="alert-time">${fmtMs(a.time)}</span>
+      </div>
+      <div class="alert-desc">${a.desc}</div>
+      <div class="alert-remed">${a.remediation}</div>
+      <div class="alert-actions">
+        ${a.status==='firing'?`<button class="alert-action-btn ack" onclick="ackAlert(${idx})">Acknowledge</button>`:''}
+        ${a.status!=='resolved'?`<button class="alert-action-btn resolve" onclick="resolveAlert(${idx})">Resolve</button>`:''}
+      </div>
+    `;
     list.appendChild(el);
   });
 }
+function ackAlert(idx){
+  if(SIM.alerts[idx]){
+    SIM.alerts[idx].status='acknowledged';
+    addTimelineEvent('ack','Acknowledged: '+SIM.alerts[idx].desc.substring(0,60)+'...',new Date());
+    renderAlerts();
+  }
+}
+function resolveAlert(idx){
+  if(SIM.alerts[idx]){
+    const a=SIM.alerts[idx];
+    if(a.severity==='critical'&&a.status!=='resolved')SIM.criticalCount=Math.max(0,SIM.criticalCount-1);
+    if(a.severity==='warning'&&a.status!=='resolved')SIM.warningCount=Math.max(0,SIM.warningCount-1);
+    a.status='resolved';
+    addTimelineEvent('resolved','Resolved: '+a.desc.substring(0,60)+'...',new Date());
+    renderAlerts();
+    updateSevCounts();
+  }
+}
 function updateAlertBadge(){
   const badge=document.getElementById('alertCountBadge');
-  badge.textContent=SIM.alertCount;
-  badge.className=SIM.alertCount>0?'alert-count':'alert-count zero';
+  const activeCount=SIM.alerts.filter(a=>a.status!=='resolved').length;
+  badge.textContent=activeCount;
+  badge.className=activeCount>0?'alert-count':'alert-count zero';
+}
+function updateSevCounts(){
+  const critEl=document.getElementById('critCount');
+  const warnEl=document.getElementById('warnCount');
+  const activeCrit=SIM.alerts.filter(a=>a.severity==='critical'&&a.status!=='resolved').length;
+  const activeWarn=SIM.alerts.filter(a=>a.severity==='warning'&&a.status!=='resolved').length;
+  critEl.textContent=activeCrit+' crit';
+  critEl.style.display=activeCrit>0?'inline-flex':'none';
+  warnEl.textContent=activeWarn+' warn';
+  warnEl.style.display=activeWarn>0?'inline-flex':'none';
+}
+
+// ============================================================
+// INCIDENT TIMELINE
+// ============================================================
+function addTimelineEvent(type,desc,time){
+  SIM.timelineEvents.unshift({type,desc,time});
+  if(SIM.timelineEvents.length>10)SIM.timelineEvents.pop();
+  renderTimeline();
+}
+function renderTimeline(){
+  const container=document.getElementById('alertTimeline');
+  const list=document.getElementById('timelineEntries');
+  if(SIM.timelineEvents.length===0){
+    container.style.display='none';
+    return;
+  }
+  container.style.display='block';
+  list.innerHTML='';
+  SIM.timelineEvents.forEach((ev,idx)=>{
+    const el=document.createElement('div');
+    el.className='timeline-entry';
+    const isLast=idx===SIM.timelineEvents.length-1;
+    el.innerHTML=`
+      <div class="timeline-dot ${ev.type}">${!isLast?'<div class="timeline-line"></div>':''}</div>
+      <div class="timeline-content">
+        <span class="timeline-time">${fmtMs(ev.time)}</span>
+        <span class="timeline-desc">${ev.desc.substring(0,80)}</span>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ============================================================
+// SOUND TOGGLE (visual only)
+// ============================================================
+function toggleSound(btn){
+  SIM.soundOn=!SIM.soundOn;
+  btn.classList.toggle('on',SIM.soundOn);
+  const off1=document.getElementById('soundOff1');
+  const off2=document.getElementById('soundOff2');
+  if(SIM.soundOn){
+    off1.style.display='none';
+    off2.style.display='none';
+    btn.querySelector('svg').innerHTML='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    btn.childNodes[btn.childNodes.length-1].textContent=' Sound On';
+  } else {
+    btn.querySelector('svg').innerHTML='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    btn.childNodes[btn.childNodes.length-1].textContent=' Sound Off';
+  }
 }
 
 function injectAnomaly(type){
   const now=Date.now();
   SIM.anomaly=type;
-  SIM.anomalyEnd=now+15000; // 15 second anomaly
+  SIM.anomalyEnd=now+15000;
   switch(type){
     case 'latency':
       fireAlert('critical','TTFT p99 spike detected: >8000ms across cluster','Check KV cache eviction rates. Consider reducing max batch size or adding inference pods.');
@@ -716,7 +1202,6 @@ function injectAnomaly(type){
       addLog('ERROR','vllm.engine: CUDA OOM on '+SIM.pods[2].name+' - attempting KV cache eviction');
       addLog('ERROR','vllm.engine: Emergency eviction freed 2.1GB but requests are still queued');
       addLog('WARN','llm-d.epp: Removing '+SIM.pods[2].name+' from healthy pool');
-      // Recover after anomaly ends
       setTimeout(()=>{
         SIM.pods[2].health='healthy';
         SIM.pods[2].gpuMem=45+Math.random()*15;
@@ -738,7 +1223,6 @@ function injectAnomaly(type){
       addLog('ERROR','kubelet: Pod '+SIM.pods[3].name+' terminated with exit code 137 (OOMKilled)');
       addLog('WARN','llm-d.epp: '+SIM.pods[3].name+' removed from endpoint pool - 3 pods remaining');
       addLog('INFO','llm-d.epp: Redistributing traffic across remaining pods');
-      // Recover
       setTimeout(()=>{
         SIM.pods[3].health='healthy';
         SIM.pods[3].gpuUtil=15;
@@ -748,6 +1232,25 @@ function injectAnomaly(type){
         addLog('INFO','vllm.engine: '+SIM.pods[3].name+' model loaded, warming up KV cache');
         addLog('INFO','llm-d.epp: '+SIM.pods[3].name+' re-added to healthy pool (cold cache)');
         fireAlert('warning',SIM.pods[3].name+' restarted and rejoined cluster','Pod has cold cache. Expect lower cache hit rates until prefix cache warms up.');
+      },15000);
+      break;
+    case 'cache':
+      fireAlert('critical','Prefix cache storm: eviction rate 4200/s, hit ratio collapsed to 8%','Sudden shift in request distribution causing mass prefix cache invalidation. All pods affected. Consider enabling prefix-aware routing or increasing KV cache allocation.');
+      addLog('ERROR','vllm.engine: Cache eviction storm - evicting 4200 entries/s across all pods');
+      addLog('ERROR','vllm.engine: KV cache hit ratio dropped from 72% to 8% in 3 seconds');
+      addLog('WARN','llm-d.epp: Prefix cache scores invalidated - falling back to load-based routing');
+      addLog('WARN','vllm.engine: Prefill latency increasing due to cold cache - p99 rising');
+      SIM.pods.forEach(p=>{
+        if(p.health==='healthy'){
+          p.kvCache=clamp(p.kvCache+30,0,98);
+          p.gpuMem=clamp(p.gpuMem+8,0,p.gpuTotal-1);
+        }
+      });
+      setTimeout(()=>{
+        addLog('INFO','vllm.engine: Cache eviction rate stabilizing - new prefix patterns emerging');
+        addLog('INFO','llm-d.epp: Prefix cache rebuilding - hit ratio recovering');
+        addLog('INFO','vllm.engine: KV cache hit ratio recovered to 45% - warming continues');
+        fireAlert('warning','Cache storm subsiding - hit ratio recovering to baseline','Prefix cache is rebuilding. Full recovery expected in 2-5 minutes depending on request distribution.');
       },15000);
       break;
   }
@@ -760,7 +1263,6 @@ function renderFabric(){
   const svg=document.getElementById('fabricSvg');
   const podPositions=[{x:80,y:90},{x:200,y:90},{x:320,y:90},{x:440,y:90}];
   let html='';
-  // Draw connections between all pods
   for(let i=0;i<4;i++){
     for(let j=i+1;j<4;j++){
       const bw=SIM.networkBw[i][j];
@@ -769,7 +1271,6 @@ function renderFabric(){
       html+=`<line x1="${podPositions[i].x}" y1="${podPositions[i].y}" x2="${podPositions[j].x}" y2="${podPositions[j].y}" stroke="${color}" stroke-width="${1+bw/30}" opacity="${opacity}"/>`;
     }
   }
-  // Draw pod nodes
   podPositions.forEach((p,i)=>{
     const pod=SIM.pods[i];
     const color=pod.health==='healthy'?'#10b981':pod.health==='warning'?'#f59e0b':'#ef4444';
@@ -777,7 +1278,6 @@ function renderFabric(){
     html+=`<text x="${p.x}" y="${p.y-4}" text-anchor="middle" fill="#e2e8f0" font-family="Red Hat Display,sans-serif" font-size="8" font-weight="700">Pod ${i}</text>`;
     html+=`<text x="${p.x}" y="${p.y+8}" text-anchor="middle" fill="#64748b" font-family="Red Hat Mono,monospace" font-size="6">${fmt(pod.gpuUtil,0)}%</text>`;
   });
-  // Labels
   html+=`<text x="250" y="16" text-anchor="middle" fill="#64748b" font-family="Red Hat Text,sans-serif" font-size="9">RDMA/RoCE v2 Fabric</text>`;
   html+=`<text x="250" y="170" text-anchor="middle" fill="#475569" font-family="Red Hat Text,sans-serif" font-size="7">Line color = bandwidth utilization (blue=low, yellow=mid, red=high)</text>`;
   svg.innerHTML=html;
@@ -811,7 +1311,6 @@ function updateHealthDisplay(){
   mini.textContent=score;
   mini.style.borderColor=color;
   mini.style.color=color;
-  // Breakdown
   const avgGpu=SIM.pods.reduce((s,p)=>s+p.gpuUtil,0)/SIM.pods.length;
   const lastErr=SIM.metrics.errorRate.length?SIM.metrics.errorRate[SIM.metrics.errorRate.length-1]:0;
   const lastCache=SIM.metrics.cacheHit.length?SIM.metrics.cacheHit[SIM.metrics.cacheHit.length-1]:65;
@@ -827,7 +1326,6 @@ function updateHealthDisplay(){
   document.getElementById('hbQueue').style.color=avgQueue>10?'#ef4444':avgQueue>5?'#f59e0b':'#10b981';
   document.getElementById('hbTtft').textContent=fmt(ttftp99,0)+'ms';
   document.getElementById('hbTtft').style.color=ttftp99>5000?'#ef4444':ttftp99>2000?'#f59e0b':'#10b981';
-  // Pod count
   document.getElementById('podCountBar').textContent=SIM.pods.filter(p=>p.health==='healthy').length+'/'+SIM.pods.length;
 }
 
@@ -840,7 +1338,6 @@ function simTick(){
   const isAnomaly=SIM.anomaly&&Date.now()<SIM.anomalyEnd;
   const anomalyType=isAnomaly?SIM.anomaly:null;
 
-  // Update pod metrics with realistic variance
   SIM.pods.forEach((pod,i)=>{
     if(pod.health==='error')return;
     const base=35+i*8;
@@ -848,9 +1345,11 @@ function simTick(){
     const noise=(Math.random()-0.5)*8;
     let gpuTarget=base+sine+noise;
     if(anomalyType==='latency')gpuTarget+=20;
+    if(anomalyType==='cache')gpuTarget+=10;
     pod.gpuUtil=clamp(gpuTarget,10,95);
     pod.gpuMem=clamp(pod.gpuTotal*(0.5+pod.gpuUtil/200)+(Math.random()-0.5)*5,20,pod.gpuTotal-1);
     pod.kvCache=clamp(55+Math.sin(t*0.03+i)*15+(Math.random()-0.5)*10,10,95);
+    if(anomalyType==='cache')pod.kvCache=clamp(pod.kvCache+20,10,98);
     pod.activeReqs=Math.max(0,Math.round(2+Math.sin(t*0.08+i)*2+(Math.random()-0.5)*2));
     pod.queue=Math.max(0,Math.round(1+Math.sin(t*0.06+i*2)+(Math.random()-0.5)*2));
     if(anomalyType==='latency'){pod.queue+=Math.round(rng(3,8));pod.activeReqs+=2;}
@@ -858,7 +1357,6 @@ function simTick(){
     if(pod.gpuHistory.length>30)pod.gpuHistory.shift();
   });
 
-  // Update GPU metrics
   SIM.gpus.forEach((gpu,i)=>{
     const podIdx=Math.floor(i/2);
     const pod=SIM.pods[podIdx];
@@ -867,9 +1365,9 @@ function simTick(){
       gpu.mem=clamp(pod.gpuMem+(Math.random()-0.5)*3,0,gpu.memTotal);
     }
     gpu.temp=clamp(55+gpu.util*0.3+(Math.random()-0.5)*3,40,90);
+    gpu.nvlinkBw=clamp(380+gpu.util*1.5+(Math.random()-0.5)*40,300,500);
   });
 
-  // Update network bandwidth
   for(let i=0;i<4;i++){
     for(let j=0;j<4;j++){
       if(i===j){SIM.networkBw[i][j]=0;continue;}
@@ -878,10 +1376,9 @@ function simTick(){
     }
   }
 
-  // Update time-series metrics
   const avgGpu=SIM.pods.filter(p=>p.health==='healthy').reduce((s,p)=>s+p.gpuUtil,0)/(SIM.pods.filter(p=>p.health==='healthy').length||1);
   const baseTTFT=180+avgGpu*2;
-  const p50=anomalyType==='latency'?baseTTFT+rng(2000,4000):baseTTFT+rng(-30,30);
+  const p50=anomalyType==='latency'?baseTTFT+rng(2000,4000):(anomalyType==='cache'?baseTTFT+rng(500,1500):baseTTFT+rng(-30,30));
   const p95=p50*rng(3,5);
   const p99=p50*rng(6,12);
   SIM.metrics.ttft.p50.push(clamp(p50,50,10000));
@@ -889,11 +1386,11 @@ function simTick(){
   SIM.metrics.ttft.p99.push(clamp(p99,200,20000));
   if(SIM.metrics.ttft.p50.length>CHART_MAX){SIM.metrics.ttft.p50.shift();SIM.metrics.ttft.p95.shift();SIM.metrics.ttft.p99.shift();}
 
-  const tp=anomalyType==='latency'?rng(800,1500):rng(2200,4200)+Math.sin(t*0.03)*500;
+  const tp=anomalyType==='latency'?rng(800,1500):(anomalyType==='cache'?rng(1200,2200):rng(2200,4200)+Math.sin(t*0.03)*500);
   SIM.metrics.throughput.push(clamp(tp,0,6000));
   if(SIM.metrics.throughput.length>CHART_MAX)SIM.metrics.throughput.shift();
 
-  const ch=anomalyType==='latency'?rng(20,40):(anomalyType==='oom'?rng(30,50):rng(55,78)+Math.sin(t*0.04)*8);
+  const ch=anomalyType==='latency'?rng(20,40):(anomalyType==='oom'?rng(30,50):(anomalyType==='cache'?rng(5,20):rng(55,78)+Math.sin(t*0.04)*8));
   SIM.metrics.cacheHit.push(clamp(ch,0,100));
   if(SIM.metrics.cacheHit.length>CHART_MAX)SIM.metrics.cacheHit.shift();
 
@@ -901,10 +1398,8 @@ function simTick(){
   SIM.metrics.errorRate.push(clamp(er,0,10));
   if(SIM.metrics.errorRate.length>CHART_MAX)SIM.metrics.errorRate.shift();
 
-  // Add a trace every few ticks
   if(t%3===0)addTrace();
 
-  // Add logs periodically
   if(t%2===0){
     const rid=reqId();
     const pod=SIM.pods[Math.floor(Math.random()*SIM.pods.length)];
@@ -925,7 +1420,6 @@ function simTick(){
     addLog('WARN','llm-d.epp: Adapter swap on '+SIM.pods[Math.floor(Math.random()*4)].name+' - loading lora-'+['finance','code','medical','legal'][Math.floor(Math.random()*4)]+'-v'+Math.floor(rng(1,4)));
   }
 
-  // Clear anomaly
   if(SIM.anomaly&&Date.now()>=SIM.anomalyEnd){
     SIM.anomaly=null;
     addLog('INFO','llm-d.cluster: Anomaly resolved - metrics returning to baseline');
@@ -942,7 +1436,6 @@ function render(){
   renderFabric();
   updateHealthDisplay();
 
-  // Update chart values
   const m=SIM.metrics;
   const lastP50=m.ttft.p50.length?m.ttft.p50[m.ttft.p50.length-1]:0;
   const lastP99=m.ttft.p99.length?m.ttft.p99[m.ttft.p99.length-1]:0;
@@ -957,28 +1450,29 @@ function render(){
   document.getElementById('errorValue').textContent=fmt(lastEr,2)+'%';
   document.getElementById('errorValue').style.color=lastEr>1?'#ef4444':lastEr>0.5?'#f59e0b':'#10b981';
 
-  // Draw charts
-  drawChart('chartTTFT',[m.ttft.p50,m.ttft.p95,m.ttft.p99],['#10b981','#f59e0b','#ef4444'],Math.max(3000,...m.ttft.p99,1));
-  drawChart('chartThroughput',[m.throughput],['#3b82f6'],Math.max(5000,...m.throughput,1));
-  drawChart('chartCache',[m.cacheHit],['#8b5cf6'],100);
-  drawChart('chartError',[m.errorRate],['#ef4444'],Math.max(5,...m.errorRate,1));
+  // Draw charts with Y-axis labels
+  const ttftMax=Math.max(3000,...m.ttft.p99,1);
+  drawChart('chartTTFT',[m.ttft.p50,m.ttft.p95,m.ttft.p99],['#10b981','#f59e0b','#ef4444'],ttftMax,'yAxisTTFT','ms');
+  const tpMax=Math.max(5000,...m.throughput,1);
+  drawChart('chartThroughput',[m.throughput],['#3b82f6'],tpMax,'yAxisThroughput','');
+  drawChart('chartCache',[m.cacheHit],['#8b5cf6'],100,'yAxisCache','%');
+  const erMax=Math.max(5,...m.errorRate,1);
+  drawChart('chartError',[m.errorRate],['#ef4444'],erMax,'yAxisError','%');
 }
 
 // ============================================================
 // INIT
 // ============================================================
 window.addEventListener('load',()=>{
-  // Initial logs
-  addLog('INFO','llm-d.cluster: Cluster initialized with 4 pods, 8 GPUs');
+  addLog('INFO','llm-d.cluster: Cluster initialized with 4 pods, 8x H100 80GB GPUs (DGX node)');
   addLog('INFO','vllm.engine: Model llama-3.1-70b loaded on all pods');
-  addLog('INFO','llm-d.epp: Endpoint picker ready - scoring weights: cache=0.4 load=0.25 queue=0.20 health=0.15');
+  addLog('INFO','llm-d.epp: Endpoint picker ready - strategy: load-aware-prefix-cache');
+  addLog('INFO','llm-d.epp: Scoring weights: cache=0.40 load=0.25 queue=0.20 health=0.15');
   addLog('INFO','llm-d.fabric: RDMA/RoCE v2 fabric verified - 4 endpoints connected');
-  // Seed some initial metric points
+  addLog('INFO','llm-d.fabric: NVLink 4.0 mesh verified - 450 GB/s bidirectional per link');
   for(let i=0;i<20;i++)simTick();
   render();
-  // Simulation loop
   setInterval(()=>{simTick();render()},2000);
-  // Clock updates every second
   setInterval(updateClock,1000);
 });
 </script>

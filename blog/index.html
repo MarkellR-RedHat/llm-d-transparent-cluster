@@ -11,6 +11,18 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* Reading progress indicator */
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    z-index: 9999;
+    transition: width 0.1s linear;
+  }
+
   body {
     font-family: 'Red Hat Text', sans-serif;
     background: #0a0e17;
@@ -19,10 +31,76 @@
     font-size: 16px;
   }
 
-  .container {
-    max-width: 880px;
+  .page-layout {
+    display: flex;
+    max-width: 1140px;
     margin: 0 auto;
     padding: 40px 20px 60px;
+    gap: 32px;
+  }
+
+  .main-content {
+    flex: 1;
+    min-width: 0;
+    max-width: 880px;
+  }
+
+  /* Quick Links sidebar */
+  .quick-links {
+    position: sticky;
+    top: 24px;
+    flex: 0 0 220px;
+    align-self: flex-start;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 18px 16px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+
+  .quick-links h4 {
+    font-family: 'Red Hat Display', sans-serif;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
+  }
+
+  .quick-links a {
+    display: block;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.8em;
+    line-height: 1.5;
+    padding: 4px 0;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .quick-links a:hover {
+    color: #60a5fa;
+    border-left-color: #3b82f6;
+  }
+
+  .quick-links a.ql-section {
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-top: 6px;
+  }
+
+  .quick-links a.ql-sub {
+    padding-left: 18px;
+    font-size: 0.75em;
+  }
+
+  .quick-links .ql-divider {
+    border: none;
+    border-top: 1px solid #1e293b;
+    margin: 8px 0;
   }
 
   .meta-card {
@@ -34,66 +112,76 @@
   }
 
   .meta-header {
-    padding: 36px 40px 28px;
+    padding: 28px 32px 20px;
     border-bottom: 1px solid #1e293b;
   }
 
   .meta-header h1 {
     font-family: 'Red Hat Display', sans-serif;
     font-weight: 900;
-    font-size: 2em;
+    font-size: 1.85em;
     color: #f1f5f9;
     line-height: 1.2;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .meta-header .subtitle {
     color: #94a3b8;
-    font-size: 1.05em;
+    font-size: 0.95em;
   }
 
-  .meta-row {
-    display: flex;
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #1e293b;
+  }
+
+  .meta-cell {
+    padding: 10px 20px;
     border-bottom: 1px solid #1e293b;
+    border-right: 1px solid #1e293b;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
   }
 
-  .meta-row:last-child { border-bottom: none; }
+  .meta-cell:nth-child(even) { border-right: none; }
+  .meta-cell:nth-last-child(-n+2) { border-bottom: none; }
 
-  .meta-label {
-    flex: 0 0 200px;
-    padding: 14px 20px;
-    background: rgba(30, 41, 59, 0.4);
+  .meta-cell .mc-label {
     font-weight: 700;
-    font-size: 0.85em;
-    color: #94a3b8;
-    border-right: 1px solid #1e293b;
+    font-size: 0.72em;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
   }
 
-  .meta-value {
-    flex: 1;
-    padding: 14px 20px;
+  .meta-cell .mc-value {
     color: #e2e8f0;
+    font-size: 0.88em;
   }
 
-  .meta-value a {
+  .meta-cell .mc-value a {
     color: #3b82f6;
     text-decoration: none;
   }
 
-  .meta-value a:hover {
-    text-decoration: underline;
+  .meta-cell .mc-value a:hover { text-decoration: underline; }
+
+  .meta-tags {
+    padding: 10px 20px 12px;
+    border-top: 1px solid #1e293b;
   }
 
   .badge {
     display: inline-block;
-    padding: 3px 12px;
+    padding: 2px 10px;
     border-radius: 20px;
-    font-size: 0.8em;
+    font-size: 0.72em;
     font-weight: 600;
-    margin-right: 6px;
-    margin-bottom: 4px;
+    margin-right: 4px;
+    margin-bottom: 3px;
   }
 
   .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
@@ -120,6 +208,12 @@
     border-bottom: 3px solid #3b82f6;
   }
 
+  .article h2 .section-num {
+    color: #3b82f6;
+    margin-right: 8px;
+    font-weight: 900;
+  }
+
   .article h2:first-child { margin-top: 0; }
 
   .article h3 {
@@ -128,6 +222,14 @@
     font-size: 1.15em;
     color: #e2e8f0;
     margin: 1.6em 0 0.5em;
+  }
+
+  .article h4 {
+    font-family: 'Red Hat Display', sans-serif;
+    font-weight: 700;
+    font-size: 1em;
+    color: #cbd5e1;
+    margin: 1.3em 0 0.4em;
   }
 
   .article p {
@@ -157,6 +259,100 @@
     color: #e2e8f0;
   }
 
+  /* Code block container */
+  .code-block {
+    position: relative;
+    margin: 1.3em 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #1e293b;
+    background: #0d1117;
+  }
+
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #161b22;
+    border-bottom: 1px solid #1e293b;
+    padding: 6px 14px;
+    font-family: 'Red Hat Mono', monospace;
+    font-size: 0.72em;
+  }
+
+  .code-file-label {
+    color: #8b949e;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .code-file-label::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .code-file-label.yaml::before { background: #f59e0b; }
+  .code-file-label.promql::before { background: #3b82f6; }
+  .code-file-label.json::before { background: #4ade80; }
+  .code-file-label.shell::before { background: #94a3b8; }
+  .code-file-label.python::before { background: #a78bfa; }
+  .code-file-label.text::before { background: #64748b; }
+
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #6e7681;
+    font-size: 1em;
+    font-family: 'Red Hat Mono', monospace;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 2px 8px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+
+  .copy-btn:hover {
+    color: #c9d1d9;
+    border-color: #58606a;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .copy-btn:active {
+    color: #4ade80;
+    border-color: #4ade80;
+  }
+
+  .copy-btn svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+  }
+
+  .article .code-block pre {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    padding: 16px 18px;
+    font-family: 'Red Hat Mono', monospace;
+    font-size: 0.84em;
+    line-height: 1.65;
+    overflow-x: auto;
+  }
+
+  .article .code-block pre code {
+    background: none;
+    padding: 0;
+    color: #e2e8f0;
+  }
+
+  /* Fallback for non-wrapped pre */
   .article pre {
     background: #0d1117;
     padding: 22px 24px;
@@ -174,6 +370,19 @@
     padding: 0;
     color: #e2e8f0;
   }
+
+  /* Syntax highlighting classes */
+  .syn-key { color: #7ee787; }
+  .syn-val { color: #a5d6ff; }
+  .syn-str { color: #a5d6ff; }
+  .syn-num { color: #d2a8ff; }
+  .syn-comment { color: #6e7681; font-style: italic; }
+  .syn-bool { color: #ff7b72; }
+  .syn-label { color: #ffa657; }
+  .syn-func { color: #d2a8ff; }
+  .syn-op { color: #ff7b72; }
+  .syn-bracket { color: #8b949e; }
+  .syn-field { color: #79c0ff; }
 
   .callout {
     background: rgba(59, 130, 246, 0.1);
@@ -195,6 +404,88 @@
 
   .callout-warning strong {
     color: #fbbf24;
+  }
+
+  /* Runbook styling */
+  .runbook {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    margin: 1em 0 1.6em;
+    overflow: hidden;
+  }
+
+  .runbook-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(239, 68, 68, 0.08);
+    border-bottom: 1px solid #1e293b;
+    font-family: 'Red Hat Mono', monospace;
+    font-size: 0.82em;
+    font-weight: 600;
+    color: #f87171;
+  }
+
+  .runbook-header.warning-rb {
+    background: rgba(245, 158, 11, 0.08);
+    color: #fbbf24;
+  }
+
+  .runbook-body {
+    padding: 14px 18px;
+  }
+
+  .runbook-body ol {
+    margin: 0 0 0 1.2em;
+    padding: 0;
+  }
+
+  .runbook-body li {
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+
+  .runbook-body li strong {
+    color: #e2e8f0;
+  }
+
+  /* Numbered query list */
+  .query-list {
+    counter-reset: query-counter;
+    list-style: none;
+    margin: 0 0 1.3em 0;
+    padding: 0;
+  }
+
+  .query-list > li {
+    counter-increment: query-counter;
+    margin-bottom: 1.6em;
+    padding-left: 0;
+  }
+
+  .query-list > li .query-title {
+    font-family: 'Red Hat Display', sans-serif;
+    font-weight: 700;
+    color: #f1f5f9;
+    font-size: 1em;
+    margin-bottom: 4px;
+  }
+
+  .query-list > li .query-title::before {
+    content: counter(query-counter) ".";
+    color: #3b82f6;
+    font-weight: 900;
+    margin-right: 8px;
+  }
+
+  .query-list > li .query-desc {
+    font-size: 0.9em;
+    color: #94a3b8;
+    margin-bottom: 8px;
   }
 
   .footer-note {
@@ -226,61 +517,107 @@
     color: #94a3b8;
   }
 
+  @media (max-width: 960px) {
+    .quick-links { display: none; }
+    .page-layout { max-width: 880px; }
+  }
+
   @media (max-width: 700px) {
-    .meta-row { flex-direction: column; }
-    .meta-label { flex: none; border-right: none; border-bottom: 1px solid #1e293b; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .meta-cell { border-right: none; }
+    .meta-cell:last-child { border-bottom: none; }
     .article { padding: 28px 20px; }
-    .meta-header { padding: 24px 20px; }
-    .meta-header h1 { font-size: 1.4em; }
+    .meta-header { padding: 20px 16px 14px; }
+    .meta-header h1 { font-size: 1.3em; }
+    .page-layout { padding: 20px 12px 40px; }
   }
 </style>
 </head>
 <body>
-<div class="container">
+
+<div class="reading-progress" id="readingProgress"></div>
+
+<div class="page-layout">
+
+  <!-- Quick Links Sidebar -->
+  <nav class="quick-links">
+    <h4>Quick Links</h4>
+    <a href="#section-1" class="ql-section">1. Why Specialized Observability</a>
+    <a href="#section-2" class="ql-section">2. Key Metrics</a>
+    <a href="#section-3" class="ql-section">3. Monitoring Stack</a>
+    <a href="#section-4" class="ql-section">4. PromQL Queries</a>
+    <a href="#section-5" class="ql-section">5. The 10 Essential PromQL Queries</a>
+    <hr class="ql-divider">
+    <a href="#query-1" class="ql-sub">Q1: TTFT p99</a>
+    <a href="#query-2" class="ql-sub">Q2: Token Throughput</a>
+    <a href="#query-3" class="ql-sub">Q3: Cache Hit Rate</a>
+    <a href="#query-4" class="ql-sub">Q4: GPU Memory</a>
+    <a href="#query-5" class="ql-sub">Q5: Queue Depth</a>
+    <a href="#query-6" class="ql-sub">Q6: Error Rate</a>
+    <a href="#query-7" class="ql-sub">Q7: Adapter Swap Rate</a>
+    <a href="#query-8" class="ql-sub">Q8: Prefill/Decode Ratio</a>
+    <a href="#query-9" class="ql-sub">Q9: Cost per Token</a>
+    <a href="#query-10" class="ql-sub">Q10: Cache Eviction Rate</a>
+    <hr class="ql-divider">
+    <a href="#section-6" class="ql-section">6. Alerting Strategy</a>
+    <a href="#section-7" class="ql-section">7. Alert Runbooks</a>
+    <a href="#section-8" class="ql-section">8. Distributed Tracing</a>
+    <a href="#section-9" class="ql-section">9. OpenTelemetry Setup</a>
+    <a href="#section-10" class="ql-section">10. GPU Topology Monitoring</a>
+    <a href="#section-11" class="ql-section">11. Cost Observability</a>
+    <a href="#section-12" class="ql-section">12. Grafana Dashboard JSON</a>
+    <a href="#section-13" class="ql-section">13. Dashboard Design Patterns</a>
+    <a href="#section-14" class="ql-section">14. Bringing It All Together</a>
+  </nav>
+
+  <div class="main-content">
 
   <div class="meta-card">
     <div class="meta-header">
       <h1>The Complete Guide to LLM Inference Observability with llm-d</h1>
       <div class="subtitle">Prometheus, Grafana, distributed tracing, GPU topology monitoring, and cost observability for production LLM serving</div>
     </div>
-    <div class="meta-row">
-      <div class="meta-label">Author</div>
-      <div class="meta-value">Markell Rawls</div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-label">Date</div>
-      <div class="meta-value">June 26, 2026</div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-label">Word Count</div>
-      <div class="meta-value">~3,500 words &middot; 18 min read</div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-label">Tags</div>
-      <div class="meta-value">
-        <span class="badge badge-red">llm-d</span>
-        <span class="badge badge-blue">Observability</span>
-        <span class="badge badge-green">Prometheus</span>
-        <span class="badge badge-blue">Grafana</span>
-        <span class="badge badge-amber">GPU Monitoring</span>
-        <span class="badge badge-green">KV Cache</span>
-        <span class="badge badge-blue">PromQL</span>
-        <span class="badge badge-amber">OpenTelemetry</span>
+    <div class="meta-grid">
+      <div class="meta-cell">
+        <span class="mc-label">Author</span>
+        <span class="mc-value">Markell Rawls</span>
+      </div>
+      <div class="meta-cell">
+        <span class="mc-label">Date</span>
+        <span class="mc-value">June 26, 2026</span>
+      </div>
+      <div class="meta-cell">
+        <span class="mc-label">Read Time</span>
+        <span class="mc-value">~22 min</span>
+      </div>
+      <div class="meta-cell">
+        <span class="mc-label">Status</span>
+        <span class="mc-value"><span class="badge badge-published">Published</span></span>
+      </div>
+      <div class="meta-cell">
+        <span class="mc-label">Demo</span>
+        <span class="mc-value"><a href="../">Interactive Dashboard &rarr;</a></span>
+      </div>
+      <div class="meta-cell">
+        <span class="mc-label">Sections</span>
+        <span class="mc-value">14 sections, 10 PromQL queries</span>
       </div>
     </div>
-    <div class="meta-row">
-      <div class="meta-label">Status</div>
-      <div class="meta-value"><span class="badge badge-published">Published</span></div>
-    </div>
-    <div class="meta-row">
-      <div class="meta-label">Interactive Demo</div>
-      <div class="meta-value"><a href="../">Launch Interactive Dashboard &rarr;</a></div>
+    <div class="meta-tags">
+      <span class="badge badge-red">llm-d</span>
+      <span class="badge badge-blue">Observability</span>
+      <span class="badge badge-green">Prometheus</span>
+      <span class="badge badge-blue">Grafana</span>
+      <span class="badge badge-amber">GPU Monitoring</span>
+      <span class="badge badge-green">KV Cache</span>
+      <span class="badge badge-blue">PromQL</span>
+      <span class="badge badge-amber">OpenTelemetry</span>
     </div>
   </div>
 
   <div class="article">
 
-    <h2>Why LLM Inference Needs Specialized Observability</h2>
+    <h2 id="section-1"><span class="section-num">01</span> Why LLM Inference Needs Specialized Observability</h2>
 
     <p>If you have operated a Kubernetes cluster for any length of time, you already know the standard monitoring playbook: CPU utilization, memory consumption, pod restart counts, network throughput, and HTTP error rates. These metrics serve traditional microservices well. A request arrives, consumes some CPU and memory, touches a database, and returns a result within a few milliseconds. When something goes wrong, CPU spikes or memory leaks or error rates climb, and your dashboards tell you exactly where to look. This playbook is well-established, battle-tested, and catastrophically insufficient for LLM inference workloads.</p>
 
@@ -296,7 +633,7 @@
       <strong>Key Insight:</strong> GPU utilization is not a proxy for inference quality. A cluster can show 95% GPU utilization while delivering terrible user experience because all that compute is spent on redundant prefill operations that proper cache-aware routing would have eliminated.
     </div>
 
-    <h2>The Key Metrics That Matter</h2>
+    <h2 id="section-2"><span class="section-num">02</span> The Key Metrics That Matter</h2>
 
     <p>Effective LLM inference monitoring requires a fundamentally different set of metrics than traditional service monitoring. The metrics that matter are those that capture the unique computational characteristics of autoregressive token generation, KV cache behavior, and GPU memory management. There are six core metrics that tell you almost everything you need to know about system health and user experience.</p>
 
@@ -324,60 +661,72 @@
       <strong>Warning:</strong> Do not confuse GPU compute utilization with GPU memory utilization. You can have 50% compute utilization and 95% memory utilization, which means you are one large-context request away from triggering KV cache evictions and a latency cascade.
     </div>
 
-    <h2>Building a Monitoring Stack</h2>
+    <h2 id="section-3"><span class="section-num">03</span> Building a Monitoring Stack</h2>
 
     <p>The foundation of LLM inference observability is Prometheus for metrics collection and Grafana for visualization. vLLM exposes a comprehensive metrics endpoint at <code>/metrics</code> that provides Prometheus-formatted metrics covering request latencies, token throughput, cache statistics, and internal queue state. The monitoring stack architecture is straightforward: each vLLM pod exposes metrics on a configurable port, Prometheus scrapes them on a regular interval, and Grafana dashboards query Prometheus to render real-time and historical views of cluster behavior. You do not need to instrument anything yourself because vLLM provides all the metrics out of the box.</p>
 
     <p>The first step is configuring Prometheus to discover and scrape your vLLM pods. If you are running on Kubernetes with the Prometheus Operator, the cleanest approach is to use a <code>ServiceMonitor</code> resource that automatically discovers pods based on label selectors. This eliminates the need to manually maintain scrape target lists as pods scale up and down, which is critical in environments where horizontal pod autoscaling is active.</p>
 
-    <pre><code># ServiceMonitor for vLLM inference pods
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: vllm-inference-monitor
-  namespace: llm-d
-  labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      app: vllm-inference
-  endpoints:
-    - port: metrics
-      interval: 15s
-      path: /metrics
-      scrapeTimeout: 10s
-  namespaceSelector:
-    matchNames:
-      - llm-d</code></pre>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">servicemonitor.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># ServiceMonitor for vLLM inference pods</span>
+<span class="syn-key">apiVersion</span>: <span class="syn-val">monitoring.coreos.com/v1</span>
+<span class="syn-key">kind</span>: <span class="syn-val">ServiceMonitor</span>
+<span class="syn-key">metadata</span>:
+  <span class="syn-key">name</span>: <span class="syn-val">vllm-inference-monitor</span>
+  <span class="syn-key">namespace</span>: <span class="syn-val">llm-d</span>
+  <span class="syn-key">labels</span>:
+    <span class="syn-key">release</span>: <span class="syn-val">prometheus</span>
+<span class="syn-key">spec</span>:
+  <span class="syn-key">selector</span>:
+    <span class="syn-key">matchLabels</span>:
+      <span class="syn-key">app</span>: <span class="syn-val">vllm-inference</span>
+  <span class="syn-key">endpoints</span>:
+    - <span class="syn-key">port</span>: <span class="syn-val">metrics</span>
+      <span class="syn-key">interval</span>: <span class="syn-val">15s</span>
+      <span class="syn-key">path</span>: <span class="syn-val">/metrics</span>
+      <span class="syn-key">scrapeTimeout</span>: <span class="syn-val">10s</span>
+  <span class="syn-key">namespaceSelector</span>:
+    <span class="syn-key">matchNames</span>:
+      - <span class="syn-val">llm-d</span></code></pre>
+    </div>
 
     <p>If you are not using the Prometheus Operator, you can configure static scrape targets or use Kubernetes service discovery directly in your Prometheus configuration file. The key parameters are the scrape interval, which should be 15 seconds for production LLM workloads to capture rapid changes in cache state and queue depth, and the scrape timeout, which should be set to 10 seconds to avoid marking healthy but busy pods as unresponsive during heavy inference loads.</p>
 
-    <pre><code># prometheus.yml scrape config for vLLM pods
-scrape_configs:
-  - job_name: 'vllm-inference'
-    kubernetes_sd_configs:
-      - role: pod
-        namespaces:
-          names:
-            - llm-d
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        regex: vllm-inference
-        action: keep
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        target_label: __address__
-        regex: (.+)
-        replacement: ${1}:8000
-      - source_labels: [__meta_kubernetes_pod_name]
-        target_label: pod
-      - source_labels: [__meta_kubernetes_pod_label_model]
-        target_label: model</code></pre>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">prometheus.yml</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># prometheus.yml scrape config for vLLM pods</span>
+<span class="syn-key">scrape_configs</span>:
+  - <span class="syn-key">job_name</span>: <span class="syn-str">'vllm-inference'</span>
+    <span class="syn-key">kubernetes_sd_configs</span>:
+      - <span class="syn-key">role</span>: <span class="syn-val">pod</span>
+        <span class="syn-key">namespaces</span>:
+          <span class="syn-key">names</span>:
+            - <span class="syn-val">llm-d</span>
+    <span class="syn-key">relabel_configs</span>:
+      - <span class="syn-key">source_labels</span>: <span class="syn-bracket">[</span><span class="syn-val">__meta_kubernetes_pod_label_app</span><span class="syn-bracket">]</span>
+        <span class="syn-key">regex</span>: <span class="syn-val">vllm-inference</span>
+        <span class="syn-key">action</span>: <span class="syn-val">keep</span>
+      - <span class="syn-key">source_labels</span>: <span class="syn-bracket">[</span><span class="syn-val">__meta_kubernetes_pod_annotation_prometheus_io_port</span><span class="syn-bracket">]</span>
+        <span class="syn-key">action</span>: <span class="syn-val">replace</span>
+        <span class="syn-key">target_label</span>: <span class="syn-val">__address__</span>
+        <span class="syn-key">regex</span>: <span class="syn-val">(.+)</span>
+        <span class="syn-key">replacement</span>: <span class="syn-val">${1}:8000</span>
+      - <span class="syn-key">source_labels</span>: <span class="syn-bracket">[</span><span class="syn-val">__meta_kubernetes_pod_name</span><span class="syn-bracket">]</span>
+        <span class="syn-key">target_label</span>: <span class="syn-val">pod</span>
+      - <span class="syn-key">source_labels</span>: <span class="syn-bracket">[</span><span class="syn-val">__meta_kubernetes_pod_label_model</span><span class="syn-bracket">]</span>
+        <span class="syn-key">target_label</span>: <span class="syn-val">model</span></code></pre>
+    </div>
 
     <p>Dashboard organization matters more than people realize. A common mistake is building a single monolithic dashboard with fifty panels that no one can parse during an incident. Instead, organize your dashboards into a clear hierarchy: a top-level overview dashboard that shows cluster-wide health at a glance, a pod-level dashboard that shows detailed metrics for individual inference servers, a cache dashboard focused on KV cache behavior and routing effectiveness, and a cost dashboard that tracks GPU utilization efficiency and cost-per-token. Each dashboard should answer a specific question. The overview dashboard answers "is the cluster healthy right now?" The pod dashboard answers "why is this specific pod underperforming?" The cache dashboard answers "is our routing layer doing its job?" This separation keeps each dashboard focused and scannable rather than overwhelming operators with an undifferentiated wall of charts during a high-stress incident.</p>
 
-    <h2>PromQL Queries for Critical Dashboards</h2>
+    <h2 id="section-4"><span class="section-num">04</span> PromQL Queries for Critical Dashboards</h2>
 
     <p>The power of Prometheus lies in PromQL, its query language. For LLM inference monitoring, you need queries that go beyond simple rate calculations to capture the nuanced behavior of autoregressive generation, cache dynamics, and multi-model serving. Here are the essential queries for every llm-d production dashboard, with explanations of what each measures and how to use it effectively in Grafana panels.</p>
 
@@ -385,54 +734,224 @@ scrape_configs:
 
     <p>The most critical query in your entire monitoring stack tracks time-to-first-token at the 99th percentile. This single number tells you more about user experience than any other metric in your system.</p>
 
-    <pre><code># P99 Time-to-First-Token
-histogram_quantile(0.99,
-  rate(vllm_request_ttft_seconds_bucket[5m])
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label promql">PromQL &mdash; TTFT percentiles</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># P99 Time-to-First-Token</span>
+<span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.99</span>,
+  <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_ttft_seconds_bucket</span>[<span class="syn-num">5m</span>])
 )
 
-# P95 and P50 for comparison
-histogram_quantile(0.95, rate(vllm_request_ttft_seconds_bucket[5m]))
-histogram_quantile(0.50, rate(vllm_request_ttft_seconds_bucket[5m]))</code></pre>
+<span class="syn-comment"># P95 and P50 for comparison</span>
+<span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.95</span>, <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_ttft_seconds_bucket</span>[<span class="syn-num">5m</span>]))
+<span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.50</span>, <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_ttft_seconds_bucket</span>[<span class="syn-num">5m</span>]))</code></pre>
+    </div>
 
     <p>Display p50, p95, and p99 on the same Grafana panel as overlaid time series. When p99 diverges significantly from p50, it indicates that most requests are fast but a subset is hitting a pathological code path, typically cold prefill on cache misses or extended queue wait times due to contention.</p>
 
     <h3>Token Throughput</h3>
 
-    <pre><code># Aggregate token generation rate across all pods
-sum(rate(vllm_tokens_generated_total[1m]))
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label promql">PromQL &mdash; token throughput</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># Aggregate token generation rate across all pods</span>
+<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_tokens_generated_total</span>[<span class="syn-num">1m</span>]))
 
-# Per-pod token throughput for identifying stragglers
-rate(vllm_tokens_generated_total[1m])</code></pre>
+<span class="syn-comment"># Per-pod token throughput for identifying stragglers</span>
+<span class="syn-func">rate</span>(<span class="syn-field">vllm_tokens_generated_total</span>[<span class="syn-num">1m</span>])</code></pre>
+    </div>
 
     <p>Display the per-pod query as a stacked area chart to visualize how throughput is distributed. If one pod is consistently generating fewer tokens than its peers, it may have a hardware issue, a cache problem, or a routing imbalance that is directing disproportionate traffic elsewhere.</p>
 
     <h3>KV Cache Hit Rate</h3>
 
-    <pre><code># Cache hit ratio (percentage of prefix tokens served from cache)
-sum(rate(vllm_cache_hits_total[5m])) /
-(sum(rate(vllm_cache_hits_total[5m])) + sum(rate(vllm_cache_misses_total[5m])))
-* 100</code></pre>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label promql">PromQL &mdash; KV cache hit ratio</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># Cache hit ratio (percentage of prefix tokens served from cache)</span>
+<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_hits_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">/</span>
+(<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_hits_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">+</span> <span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_misses_total</span>[<span class="syn-num">5m</span>])))
+<span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+    </div>
 
     <p>Format this as a percentage in Grafana and set color thresholds: green above 60%, yellow between 40% and 60%, red below 40%. This single panel tells you whether the EPP's cache-aware routing is delivering value or whether requests are being scattered across pods without regard for cache affinity.</p>
 
     <h3>GPU Memory, Queue Depth, Request Rate, and Error Rate</h3>
 
-    <pre><code># GPU memory utilization per pod (via DCGM exporter)
-DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label promql">PromQL &mdash; infrastructure metrics</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># GPU memory utilization per pod (via DCGM exporter)</span>
+<span class="syn-field">DCGM_FI_DEV_FB_USED</span> <span class="syn-op">/</span> <span class="syn-field">DCGM_FI_DEV_FB_TOTAL</span> <span class="syn-op">*</span> <span class="syn-num">100</span>
 
-# Queue depth across all pods
-sum(vllm_num_requests_waiting)
+<span class="syn-comment"># Queue depth across all pods</span>
+<span class="syn-func">sum</span>(<span class="syn-field">vllm_num_requests_waiting</span>)
 
-# Request rate by model (for multi-model deployments)
-sum by (model) (rate(vllm_request_total[5m]))
+<span class="syn-comment"># Request rate by model (for multi-model deployments)</span>
+<span class="syn-func">sum</span> <span class="syn-key">by</span> (<span class="syn-label">model</span>) (<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_total</span>[<span class="syn-num">5m</span>]))
 
-# Error rate (5xx and OOM)
-sum(rate(vllm_request_errors_total[5m])) /
-sum(rate(vllm_request_total[5m])) * 100</code></pre>
+<span class="syn-comment"># Error rate (5xx and OOM)</span>
+<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_errors_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">/</span>
+<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+    </div>
 
     <p>These queries form the backbone of your operational dashboards. Each one answers a specific question: Are users waiting too long? Are we generating tokens fast enough? Is the cache working? Are GPUs running out of memory? Are requests piling up? Which models are getting the most traffic? Are we returning errors? Layer these queries into Grafana panels with appropriate color-coded thresholds and you have a monitoring stack that exposes the true health of your LLM inference cluster rather than the misleading picture painted by generic Kubernetes metrics.</p>
 
-    <h2>Alerting Strategy</h2>
+    <h2 id="section-5"><span class="section-num">05</span> The 10 PromQL Queries Every llm-d Operator Needs</h2>
+
+    <p>Below are the ten queries you should have bookmarked, pinned, and ready to paste into any Grafana panel. Each one targets a specific operational question. Together they give you complete coverage of latency, throughput, caching, cost, and hardware health for an llm-d cluster.</p>
+
+    <ol class="query-list">
+
+      <li id="query-1">
+        <div class="query-title">P99 Time-to-First-Token</div>
+        <div class="query-desc">The single most important user-experience metric. Alerts you to cache misses, queue buildup, or prefill contention before users complain.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">histogram_quantile</span>(<span class="syn-num">0.99</span>,
+  <span class="syn-func">rate</span>(<span class="syn-field">vllm_request_ttft_seconds_bucket</span>[<span class="syn-num">5m</span>])
+)</code></pre>
+        </div>
+      </li>
+
+      <li id="query-2">
+        <div class="query-title">Cluster Token Throughput (tokens/sec)</div>
+        <div class="query-desc">Aggregate decode throughput across all pods. A sustained drop means you are losing capacity -- correlate with GPU memory and queue depth.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_tokens_generated_total</span>[<span class="syn-num">1m</span>]))</code></pre>
+        </div>
+      </li>
+
+      <li id="query-3">
+        <div class="query-title">KV Cache Hit Rate (%)</div>
+        <div class="query-desc">Percentage of prefix tokens served from cache. Below 40% means your routing is not exploiting prefix reuse and you are paying a large compute tax.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_hits_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">/</span>
+(<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_hits_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">+</span>
+ <span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_misses_total</span>[<span class="syn-num">5m</span>])))
+<span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-4">
+        <div class="query-title">GPU Memory Utilization (%)</div>
+        <div class="query-desc">Per-GPU framebuffer usage. Above 90% you are in the danger zone for KV cache eviction storms. Alert well before you get there.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-field">DCGM_FI_DEV_FB_USED</span> <span class="syn-op">/</span> <span class="syn-field">DCGM_FI_DEV_FB_TOTAL</span> <span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-5">
+        <div class="query-title">Total Queue Depth</div>
+        <div class="query-desc">Requests waiting across the cluster. Sustained values above 50 mean you need more replicas or your routing is creating hotspots.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-field">vllm_num_requests_waiting</span>)</code></pre>
+        </div>
+      </li>
+
+      <li id="query-6">
+        <div class="query-title">Request Error Rate (%)</div>
+        <div class="query-desc">Percentage of requests returning errors. Above 1% sustained is a warning. Above 5% is an active incident.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_errors_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">/</span>
+<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_request_total</span>[<span class="syn-num">5m</span>])) <span class="syn-op">*</span> <span class="syn-num">100</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-7">
+        <div class="query-title">Adapter Swap Rate (swaps/sec)</div>
+        <div class="query-desc">How frequently LoRA adapters are being loaded and unloaded. A high swap rate means adapter-aware routing is not grouping requests by adapter, and every swap adds latency.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_lora_adapter_swaps_total</span>[<span class="syn-num">5m</span>]))</code></pre>
+        </div>
+      </li>
+
+      <li id="query-8">
+        <div class="query-title">Prefill / Decode Ratio</div>
+        <div class="query-desc">Ratio of requests currently in the prefill phase vs. decode phase. A ratio above 0.5 means more than a third of in-flight requests are doing prefill, which starves decode throughput and causes ITL spikes.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-field">vllm_num_requests_prefill</span>) <span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(<span class="syn-func">sum</span>(<span class="syn-field">vllm_num_requests_decode</span>), <span class="syn-num">1</span>)</code></pre>
+        </div>
+      </li>
+
+      <li id="query-9">
+        <div class="query-title">Cost per Million Tokens (USD)</div>
+        <div class="query-desc">Real-time unit economics. Divides your GPU fleet cost (derived from GPU count and hourly rate) by actual token throughput. Track this daily to catch efficiency regressions.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-comment"># Assumes $35/hr per GPU; adjust the constant for your rate</span>
+<span class="syn-comment"># count(DCGM_FI_DEV_GPU_TEMP) returns number of GPUs in the fleet</span>
+(
+  <span class="syn-func">count</span>(<span class="syn-field">DCGM_FI_DEV_GPU_TEMP</span>) <span class="syn-op">*</span> <span class="syn-num">35</span> <span class="syn-op">/</span> <span class="syn-num">3600</span>   <span class="syn-comment"># fleet cost per second</span>
+)
+<span class="syn-op">/</span>
+<span class="syn-func">clamp_min</span>(<span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_tokens_generated_total</span>[<span class="syn-num">5m</span>])), <span class="syn-num">0.001</span>)
+<span class="syn-op">*</span> <span class="syn-num">1e6</span></code></pre>
+        </div>
+      </li>
+
+      <li id="query-10">
+        <div class="query-title">Cache Eviction Rate (evictions/sec)</div>
+        <div class="query-desc">Rate at which KV cache entries are being evicted. A spike here is the leading indicator of an eviction storm -- it precedes TTFT degradation by 30-60 seconds, giving you a narrow window to act.</div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span class="code-file-label promql">PromQL</span>
+            <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+          </div>
+          <pre><code><span class="syn-func">sum</span>(<span class="syn-func">rate</span>(<span class="syn-field">vllm_cache_evictions_total</span>[<span class="syn-num">5m</span>]))</code></pre>
+        </div>
+      </li>
+
+    </ol>
+
+    <div class="callout">
+      <strong>Tip:</strong> Save these ten queries as a Grafana <em>library panel</em> collection. When you build new dashboards you can drag them in rather than rewriting them from memory during an incident.
+    </div>
+
+    <h2 id="section-6"><span class="section-num">06</span> Alerting Strategy</h2>
 
     <p>Not everything that belongs on a dashboard deserves an alert. Alert fatigue is the fastest way to ensure that real incidents get ignored because operators have been conditioned to dismiss notifications as noise. The distinction is simple: dashboards are for exploration and context during investigation, alerts are for situations that require human intervention within a defined time window. If a metric being out of range does not require someone to take action, it belongs on a dashboard panel, not in an alerting rule.</p>
 
@@ -455,90 +974,149 @@ sum(rate(vllm_request_total[5m])) * 100</code></pre>
       <li><strong>Pod restarts above 3</strong> within a 15-minute window. Something is causing pods to crash-loop, most likely OOM kills from GPU memory exhaustion or a misconfigured model configuration.</li>
     </ul>
 
-    <pre><code># PrometheusRule for llm-d alerting
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: llm-d-inference-alerts
-  namespace: llm-d
-spec:
-  groups:
-    - name: llm-d.latency
-      rules:
-        - alert: HighTTFTWarning
-          expr: |
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">prometheus-rules.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># PrometheusRule for llm-d alerting</span>
+<span class="syn-key">apiVersion</span>: <span class="syn-val">monitoring.coreos.com/v1</span>
+<span class="syn-key">kind</span>: <span class="syn-val">PrometheusRule</span>
+<span class="syn-key">metadata</span>:
+  <span class="syn-key">name</span>: <span class="syn-val">llm-d-inference-alerts</span>
+  <span class="syn-key">namespace</span>: <span class="syn-val">llm-d</span>
+<span class="syn-key">spec</span>:
+  <span class="syn-key">groups</span>:
+    - <span class="syn-key">name</span>: <span class="syn-val">llm-d.latency</span>
+      <span class="syn-key">rules</span>:
+        - <span class="syn-key">alert</span>: <span class="syn-val">HighTTFTWarning</span>
+          <span class="syn-key">expr</span>: <span class="syn-op">|</span>
             histogram_quantile(0.99,
               rate(vllm_request_ttft_seconds_bucket[5m])
             ) > 5
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "TTFT p99 exceeds 5s"
-            description: "P99 time-to-first-token is {{ $value | humanizeDuration }}"
-        - alert: HighTTFTCritical
-          expr: |
+          <span class="syn-key">for</span>: <span class="syn-val">5m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">warning</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"TTFT p99 exceeds 5s"</span>
+            <span class="syn-key">description</span>: <span class="syn-str">"P99 time-to-first-token is {{ $value | humanizeDuration }}"</span>
+            <span class="syn-key">runbook_url</span>: <span class="syn-str">"https://runbooks.example.com/llm-d/HighTTFT"</span>
+        - <span class="syn-key">alert</span>: <span class="syn-val">HighTTFTCritical</span>
+          <span class="syn-key">expr</span>: <span class="syn-op">|</span>
             histogram_quantile(0.99,
               rate(vllm_request_ttft_seconds_bucket[5m])
             ) > 10
-          for: 3m
-          labels:
-            severity: critical
-          annotations:
-            summary: "TTFT p99 exceeds 10s - active incident"
-            description: "P99 TTFT at {{ $value | humanizeDuration }}. Users severely impacted."
-    - name: llm-d.cache
-      rules:
-        - alert: LowCacheHitRate
-          expr: |
+          <span class="syn-key">for</span>: <span class="syn-val">3m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">critical</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"TTFT p99 exceeds 10s - active incident"</span>
+            <span class="syn-key">description</span>: <span class="syn-str">"P99 TTFT at {{ $value | humanizeDuration }}. Users severely impacted."</span>
+            <span class="syn-key">runbook_url</span>: <span class="syn-str">"https://runbooks.example.com/llm-d/HighTTFT"</span>
+    - <span class="syn-key">name</span>: <span class="syn-val">llm-d.cache</span>
+      <span class="syn-key">rules</span>:
+        - <span class="syn-key">alert</span>: <span class="syn-val">LowCacheHitRate</span>
+          <span class="syn-key">expr</span>: <span class="syn-op">|</span>
             (sum(rate(vllm_cache_hits_total[5m])) /
             (sum(rate(vllm_cache_hits_total[5m])) +
              sum(rate(vllm_cache_misses_total[5m])))) * 100 < 40
-          for: 10m
-          labels:
-            severity: warning
-          annotations:
-            summary: "KV cache hit rate below 40%"
-            description: "Cache hit ratio is {{ $value }}%. Check EPP routing."
-    - name: llm-d.resources
-      rules:
-        - alert: GPUMemoryPressure
-          expr: DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100 > 90
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "GPU memory utilization above 90%"
-        - alert: HighQueueDepth
-          expr: sum(vllm_num_requests_waiting) > 50
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Inference queue depth exceeds 50"
-        - alert: PodCrashLoop
-          expr: |
+          <span class="syn-key">for</span>: <span class="syn-val">10m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">warning</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"KV cache hit rate below 40%"</span>
+            <span class="syn-key">description</span>: <span class="syn-str">"Cache hit ratio is {{ $value }}%. Check EPP routing."</span>
+    - <span class="syn-key">name</span>: <span class="syn-val">llm-d.resources</span>
+      <span class="syn-key">rules</span>:
+        - <span class="syn-key">alert</span>: <span class="syn-val">GPUMemoryPressure</span>
+          <span class="syn-key">expr</span>: <span class="syn-val">DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100 > 90</span>
+          <span class="syn-key">for</span>: <span class="syn-val">5m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">warning</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"GPU memory utilization above 90%"</span>
+            <span class="syn-key">runbook_url</span>: <span class="syn-str">"https://runbooks.example.com/llm-d/GPUMemoryPressure"</span>
+        - <span class="syn-key">alert</span>: <span class="syn-val">HighQueueDepth</span>
+          <span class="syn-key">expr</span>: <span class="syn-val">sum(vllm_num_requests_waiting) > 50</span>
+          <span class="syn-key">for</span>: <span class="syn-val">5m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">critical</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"Inference queue depth exceeds 50"</span>
+        - <span class="syn-key">alert</span>: <span class="syn-val">PodCrashLoop</span>
+          <span class="syn-key">expr</span>: <span class="syn-op">|</span>
             increase(kube_pod_container_status_restarts_total{
               namespace="llm-d"
             }[15m]) > 3
-          for: 1m
-          labels:
-            severity: critical
-          annotations:
-            summary: "Inference pod restarting repeatedly"
-        - alert: HighErrorRate
-          expr: |
+          <span class="syn-key">for</span>: <span class="syn-val">1m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">critical</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"Inference pod restarting repeatedly"</span>
+            <span class="syn-key">runbook_url</span>: <span class="syn-str">"https://runbooks.example.com/llm-d/PodCrashLoop"</span>
+        - <span class="syn-key">alert</span>: <span class="syn-val">HighErrorRate</span>
+          <span class="syn-key">expr</span>: <span class="syn-op">|</span>
             sum(rate(vllm_request_errors_total[5m])) /
             sum(rate(vllm_request_total[5m])) * 100 > 1
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "Request error rate above 1%"</code></pre>
+          <span class="syn-key">for</span>: <span class="syn-val">5m</span>
+          <span class="syn-key">labels</span>:
+            <span class="syn-key">severity</span>: <span class="syn-val">warning</span>
+          <span class="syn-key">annotations</span>:
+            <span class="syn-key">summary</span>: <span class="syn-str">"Request error rate above 1%"</span></code></pre>
+    </div>
 
     <p>To avoid alert fatigue, use inhibition rules to suppress warning-level alerts when a critical alert is already firing for the same component. If <code>HighTTFTCritical</code> is active, there is no value in also firing <code>HighTTFTWarning</code> or <code>LowCacheHitRate</code>. Group related alerts so that a single notification contains all the context an operator needs to diagnose the issue. And always include a runbook link in the alert annotations that explains not just what the alert means but what specific steps to take in response. An alert without a runbook is just noise that erodes operator confidence in the monitoring system.</p>
 
-    <h2>Distributed Tracing for Inference</h2>
+    <h2 id="section-7"><span class="section-num">07</span> Alert Runbooks</h2>
+
+    <p>Every alert needs a corresponding runbook. Below are step-by-step response procedures for the three most critical alerts in an llm-d deployment. These are designed to be followed in order during an incident, with each step narrowing the diagnosis until you reach the root cause.</p>
+
+    <h3>HighTTFT (Warning or Critical)</h3>
+
+    <div class="runbook">
+      <div class="runbook-header">RUNBOOK: HighTTFTWarning / HighTTFTCritical</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Check cache hit rate.</strong> Open the cache dashboard and check whether the KV cache hit ratio has dropped. If it fell below 40% at roughly the same time TTFT spiked, the root cause is likely routing. Jump to the EPP logs and confirm that cache affinity scoring is active.</li>
+          <li><strong>Check queue depth per pod.</strong> Run <code>sum by (pod) (vllm_num_requests_waiting)</code>. If one or two pods have dramatically higher queues than others, the EPP is creating hotspots. Check whether a pod's health score is stale or whether a recent deploy changed label selectors.</li>
+          <li><strong>Check if the EPP is routing correctly.</strong> Inspect EPP decision logs for the last 5 minutes. Look for pods being scored zero (excluded) or for cache affinity weights that were overridden by load balancing weights. If all pods show equal traffic despite uneven cache state, the cache weight is too low.</li>
+          <li><strong>Check for prefill/decode imbalance.</strong> Query <code>sum(vllm_num_requests_prefill) / clamp_min(sum(vllm_num_requests_decode), 1)</code>. A ratio above 0.5 means too many requests are in prefill simultaneously, starving decode throughput. Consider enabling prefill-decode disaggregation or rate-limiting new request admission.</li>
+          <li><strong>Check for large-context outliers.</strong> Review recent request traces for input token counts above 50K. A single very large context request can monopolize GPU compute and inflate TTFT for all queued requests behind it. Consider setting a max-context-length admission policy.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>GPUMemoryPressure</h3>
+
+    <div class="runbook">
+      <div class="runbook-header warning-rb">RUNBOOK: GPUMemoryPressure</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Identify which pod(s).</strong> Query <code>DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL * 100</code> broken down by pod. Determine whether this is a cluster-wide issue (all pods above 90%) or isolated to specific pods.</li>
+          <li><strong>Check KV cache occupancy.</strong> Query <code>vllm_cache_blocks_used / vllm_cache_blocks_total * 100</code>. If cache occupancy is above 95%, the cache is full and evictions are imminent. Check the eviction policy: is it LRU (least recently used) or prefix-aware?</li>
+          <li><strong>Look for runaway requests.</strong> Check for in-flight requests with unusually long generated token counts. A request generating 100K+ tokens consumes proportionally more KV cache memory. If one request is consuming a disproportionate share, consider setting <code>max_tokens</code> limits.</li>
+          <li><strong>Consider scaling horizontally.</strong> If memory pressure is cluster-wide, you need more pods. Use <code>kubectl scale</code> or trigger the HPA manually. Each additional pod adds KV cache capacity proportional to its GPU memory.</li>
+          <li><strong>Adjust eviction policy.</strong> If the workload has strong prefix reuse patterns, switch from LRU to a prefix-aware eviction policy that preserves high-value cached prefixes. This reduces redundant prefill and relieves memory pressure indirectly.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>PodCrashLoop</h3>
+
+    <div class="runbook">
+      <div class="runbook-header">RUNBOOK: PodCrashLoop</div>
+      <div class="runbook-body">
+        <ol>
+          <li><strong>Check pod logs.</strong> Run <code>kubectl logs -n llm-d &lt;pod-name&gt; --previous</code> to see the logs from the most recent crash. Look for OOM (Out Of Memory) messages, CUDA errors, or model loading failures.</li>
+          <li><strong>Check GPU memory at time of crash.</strong> Look at DCGM metrics for the 2 minutes preceding the crash. If <code>DCGM_FI_DEV_FB_USED</code> hit 100% immediately before the restart, this is a GPU OOM kill. The pod tried to allocate more VRAM than available.</li>
+          <li><strong>Check if the model fits.</strong> Verify that the model's memory footprint (weights + KV cache + activation memory) fits within the GPU's VRAM. For a 70B model in FP16 on 4x A100-80GB, you need approximately 140GB for weights alone, leaving 180GB for KV cache across the 4 GPUs.</li>
+          <li><strong>Check for NVLink errors.</strong> Query <code>rate(DCGM_FI_DEV_NVLINK_CRC_FLIT_ERROR_COUNT[5m])</code> for the affected node. Hardware failures on NVLink can cause CUDA errors that crash the inference process.</li>
+          <li><strong>Check Kubernetes events.</strong> Run <code>kubectl get events -n llm-d --sort-by=.metadata.creationTimestamp</code>. Look for <code>OOMKilled</code>, <code>FailedScheduling</code>, or <code>BackOff</code> events that provide additional context about why the pod is restarting.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h2 id="section-8"><span class="section-num">08</span> Distributed Tracing for Inference</h2>
 
     <p>Metrics tell you that something is wrong. Traces tell you where it went wrong and why. For llm-d, distributed tracing is essential because a single inference request traverses multiple components, each with its own latency contribution and failure modes. Understanding the full request lifecycle requires end-to-end traces that correlate events across the Gateway, EPP, and vLLM inference pods into a single coherent narrative.</p>
 
@@ -548,41 +1126,137 @@ spec:
 
     <p>OpenTelemetry is the industry standard for instrumentation. vLLM supports OpenTelemetry natively, and the llm-d control plane components can be instrumented using the OpenTelemetry SDKs for Go and Python. The key configuration requirement is ensuring that trace context is propagated across component boundaries using W3C Trace Context headers, which allows a single trace to span the entire request lifecycle from Gateway ingress to client response.</p>
 
-    <pre><code># OpenTelemetry Collector config for llm-d tracing
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">otel-collector-config.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># OpenTelemetry Collector config for llm-d tracing</span>
+<span class="syn-key">receivers</span>:
+  <span class="syn-key">otlp</span>:
+    <span class="syn-key">protocols</span>:
+      <span class="syn-key">grpc</span>:
+        <span class="syn-key">endpoint</span>: <span class="syn-val">0.0.0.0:4317</span>
+      <span class="syn-key">http</span>:
+        <span class="syn-key">endpoint</span>: <span class="syn-val">0.0.0.0:4318</span>
 
-processors:
-  batch:
-    timeout: 5s
-    send_batch_size: 1024
-  attributes:
-    actions:
-      - key: deployment.environment
-        value: production
-        action: upsert
+<span class="syn-key">processors</span>:
+  <span class="syn-key">batch</span>:
+    <span class="syn-key">timeout</span>: <span class="syn-val">5s</span>
+    <span class="syn-key">send_batch_size</span>: <span class="syn-num">1024</span>
+  <span class="syn-key">attributes</span>:
+    <span class="syn-key">actions</span>:
+      - <span class="syn-key">key</span>: <span class="syn-val">deployment.environment</span>
+        <span class="syn-key">value</span>: <span class="syn-val">production</span>
+        <span class="syn-key">action</span>: <span class="syn-val">upsert</span>
 
-exporters:
-  jaeger:
-    endpoint: jaeger-collector.observability:14250
-    tls:
-      insecure: true
+<span class="syn-key">exporters</span>:
+  <span class="syn-key">otlp/jaeger</span>:
+    <span class="syn-key">endpoint</span>: <span class="syn-val">jaeger-collector.observability:4317</span>
+    <span class="syn-key">tls</span>:
+      <span class="syn-key">insecure</span>: <span class="syn-bool">true</span>
 
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch, attributes]
-      exporters: [jaeger]</code></pre>
+<span class="syn-key">service</span>:
+  <span class="syn-key">pipelines</span>:
+    <span class="syn-key">traces</span>:
+      <span class="syn-key">receivers</span>: <span class="syn-bracket">[</span><span class="syn-val">otlp</span><span class="syn-bracket">]</span>
+      <span class="syn-key">processors</span>: <span class="syn-bracket">[</span><span class="syn-val">batch, attributes</span><span class="syn-bracket">]</span>
+      <span class="syn-key">exporters</span>: <span class="syn-bracket">[</span><span class="syn-val">otlp/jaeger</span><span class="syn-bracket">]</span></code></pre>
+    </div>
 
     <p>The real power of tracing emerges when you correlate traces with metrics. A TTFT spike on your Grafana dashboard becomes immediately actionable when you can click through to the specific traces that contributed to the p99 and see that they all missed the cache on a specific pod, or that they all spent 3 seconds waiting in the EPP queue because a pod health check was returning stale data. This correlation between aggregate metrics and individual request traces is what transforms monitoring from "something is wrong somewhere" to "here is exactly what went wrong, on which component, and why."</p>
 
-    <h2>GPU Topology Monitoring</h2>
+    <h2 id="section-9"><span class="section-num">09</span> OpenTelemetry Setup for vLLM</h2>
+
+    <p>This section provides a concrete, end-to-end example of instrumenting a vLLM deployment with OpenTelemetry and exporting traces to Jaeger. The setup has three components: enabling OTel in vLLM itself, deploying the OpenTelemetry Collector as a sidecar or DaemonSet, and deploying Jaeger for trace visualization.</p>
+
+    <h3>Enabling OTel in vLLM</h3>
+
+    <p>vLLM supports OpenTelemetry natively via environment variables. Set these on your vLLM deployment to enable trace emission without any code changes.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">vllm-deployment.yaml (env section)</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-key">env</span>:
+  <span class="syn-comment"># Enable OpenTelemetry tracing in vLLM</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_EXPORTER_OTLP_ENDPOINT</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"http://otel-collector.observability:4317"</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_SERVICE_NAME</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"vllm-inference"</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_TRACES_EXPORTER</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"otlp"</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_EXPORTER_OTLP_PROTOCOL</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"grpc"</span>
+  <span class="syn-comment"># Propagate trace context across services</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_PROPAGATORS</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"tracecontext,baggage"</span>
+  <span class="syn-comment"># Sample 10% of traces in production to control volume</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_TRACES_SAMPLER</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"parentbased_traceidratio"</span>
+  - <span class="syn-key">name</span>: <span class="syn-val">OTEL_TRACES_SAMPLER_ARG</span>
+    <span class="syn-key">value</span>: <span class="syn-str">"0.1"</span></code></pre>
+    </div>
+
+    <h3>Deploying Jaeger for Trace Visualization</h3>
+
+    <p>For production use, deploy Jaeger with persistent storage. The minimal all-in-one deployment below is suitable for staging environments. For production, use the Jaeger Operator with Elasticsearch or Cassandra as the storage backend.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label yaml">jaeger-allinone.yaml</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-key">apiVersion</span>: <span class="syn-val">apps/v1</span>
+<span class="syn-key">kind</span>: <span class="syn-val">Deployment</span>
+<span class="syn-key">metadata</span>:
+  <span class="syn-key">name</span>: <span class="syn-val">jaeger</span>
+  <span class="syn-key">namespace</span>: <span class="syn-val">observability</span>
+<span class="syn-key">spec</span>:
+  <span class="syn-key">replicas</span>: <span class="syn-num">1</span>
+  <span class="syn-key">selector</span>:
+    <span class="syn-key">matchLabels</span>:
+      <span class="syn-key">app</span>: <span class="syn-val">jaeger</span>
+  <span class="syn-key">template</span>:
+    <span class="syn-key">metadata</span>:
+      <span class="syn-key">labels</span>:
+        <span class="syn-key">app</span>: <span class="syn-val">jaeger</span>
+    <span class="syn-key">spec</span>:
+      <span class="syn-key">containers</span>:
+        - <span class="syn-key">name</span>: <span class="syn-val">jaeger</span>
+          <span class="syn-key">image</span>: <span class="syn-val">jaegertracing/all-in-one:1.57</span>
+          <span class="syn-key">ports</span>:
+            - <span class="syn-key">containerPort</span>: <span class="syn-num">16686</span>  <span class="syn-comment"># Jaeger UI</span>
+            - <span class="syn-key">containerPort</span>: <span class="syn-num">4317</span>   <span class="syn-comment"># OTLP gRPC</span>
+            - <span class="syn-key">containerPort</span>: <span class="syn-num">4318</span>   <span class="syn-comment"># OTLP HTTP</span>
+          <span class="syn-key">env</span>:
+            - <span class="syn-key">name</span>: <span class="syn-val">COLLECTOR_OTLP_ENABLED</span>
+              <span class="syn-key">value</span>: <span class="syn-str">"true"</span>
+---
+<span class="syn-key">apiVersion</span>: <span class="syn-val">v1</span>
+<span class="syn-key">kind</span>: <span class="syn-val">Service</span>
+<span class="syn-key">metadata</span>:
+  <span class="syn-key">name</span>: <span class="syn-val">jaeger-collector</span>
+  <span class="syn-key">namespace</span>: <span class="syn-val">observability</span>
+<span class="syn-key">spec</span>:
+  <span class="syn-key">selector</span>:
+    <span class="syn-key">app</span>: <span class="syn-val">jaeger</span>
+  <span class="syn-key">ports</span>:
+    - <span class="syn-key">name</span>: <span class="syn-val">otlp-grpc</span>
+      <span class="syn-key">port</span>: <span class="syn-num">4317</span>
+      <span class="syn-key">targetPort</span>: <span class="syn-num">4317</span>
+    - <span class="syn-key">name</span>: <span class="syn-val">otlp-http</span>
+      <span class="syn-key">port</span>: <span class="syn-num">4318</span>
+      <span class="syn-key">targetPort</span>: <span class="syn-num">4318</span>
+    - <span class="syn-key">name</span>: <span class="syn-val">ui</span>
+      <span class="syn-key">port</span>: <span class="syn-num">16686</span>
+      <span class="syn-key">targetPort</span>: <span class="syn-num">16686</span></code></pre>
+    </div>
+
+    <p>With this setup, vLLM sends traces via OTLP gRPC to the OpenTelemetry Collector, which batches, enriches, and forwards them to Jaeger. Open the Jaeger UI at port 16686 and you will see traces for each inference request, with spans for prefill, decode, and response streaming. From Grafana, you can link to Jaeger traces using the <code>traceID</code> exemplar label that vLLM attaches to its Prometheus histograms, creating a seamless flow from metric anomaly to individual trace.</p>
+
+    <h2 id="section-10"><span class="section-num">10</span> GPU Topology Monitoring</h2>
 
     <p>Modern GPU servers are not homogeneous compute pools. The physical interconnect topology between GPUs dramatically affects inference performance, and llm-d's scheduler is topology-aware for good reason. Understanding and monitoring GPU topology is essential for diagnosing performance anomalies that have no obvious cause at the application layer and that standard Kubernetes metrics cannot even represent.</p>
 
@@ -592,35 +1266,47 @@ service:
 
     <p>The DCGM (Data Center GPU Manager) exporter is the standard tool for exposing GPU-level metrics to Prometheus. Beyond the basic utilization and memory metrics, DCGM exposes NVLink-specific counters that are invaluable for topology monitoring and hardware health assessment.</p>
 
-    <pre><code># Key DCGM metrics for topology monitoring
-DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL       # NVLink aggregate throughput
-DCGM_FI_DEV_NVLINK_CRC_FLIT_ERROR_COUNT  # NVLink CRC flit errors
-DCGM_FI_DEV_NVLINK_CRC_DATA_ERROR_COUNT  # NVLink CRC data errors
-DCGM_FI_DEV_NVLINK_REPLAY_ERROR_COUNT    # NVLink replay errors
-DCGM_FI_DEV_PCIE_TX_THROUGHPUT           # PCIe transmit throughput
-DCGM_FI_DEV_PCIE_RX_THROUGHPUT           # PCIe receive throughput</code></pre>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label promql">DCGM metrics for topology monitoring</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># Key DCGM metrics for topology monitoring</span>
+<span class="syn-field">DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL</span>       <span class="syn-comment"># NVLink aggregate throughput</span>
+<span class="syn-field">DCGM_FI_DEV_NVLINK_CRC_FLIT_ERROR_COUNT</span>  <span class="syn-comment"># NVLink CRC flit errors</span>
+<span class="syn-field">DCGM_FI_DEV_NVLINK_CRC_DATA_ERROR_COUNT</span>  <span class="syn-comment"># NVLink CRC data errors</span>
+<span class="syn-field">DCGM_FI_DEV_NVLINK_REPLAY_ERROR_COUNT</span>    <span class="syn-comment"># NVLink replay errors</span>
+<span class="syn-field">DCGM_FI_DEV_PCIE_TX_THROUGHPUT</span>           <span class="syn-comment"># PCIe transmit throughput</span>
+<span class="syn-field">DCGM_FI_DEV_PCIE_RX_THROUGHPUT</span>           <span class="syn-comment"># PCIe receive throughput</span></code></pre>
+    </div>
 
     <p>NVLink errors deserve special and immediate attention. A rising count of CRC errors or replay errors on an NVLink connection can indicate a failing GPU, a loose physical connection in the NVLink bridge, or thermal issues causing signal integrity degradation. These errors cause retransmissions that reduce effective bandwidth and increase latency jitter in ways that are nearly impossible to diagnose from application-level metrics alone. Left unmonitored, a degrading NVLink connection can cause intermittent latency spikes that appear random at the application layer but have a clear hardware root cause. Alert on any non-zero rate of NVLink errors and investigate immediately. Hardware issues do not fix themselves, and they invariably get worse over time until the link fails entirely.</p>
 
     <p>llm-d uses topology information actively for scheduling decisions. When placing a new model replica, the scheduler prefers GPU groups that are fully connected via NVLink within the same domain. When performing KV cache transfers for disaggregated prefill/decode architectures, the scheduler prefers transfer paths that traverse NVLink rather than PCIe to minimize transfer latency. Monitoring these scheduling decisions and correlating them with observed inference latency validates that topology-aware scheduling is actually delivering the expected performance benefits rather than just adding complexity.</p>
 
-    <h2>Cost Observability</h2>
+    <h2 id="section-11"><span class="section-num">11</span> Cost Observability</h2>
 
     <p>GPUs are the most expensive resource in your infrastructure stack. An H100 SXM instance costs roughly $30-40 per hour on major cloud providers, and when you are running a cluster of eight or sixteen of these machines, every single percentage point of utilization efficiency translates directly to thousands of dollars per month in savings or waste. Cost observability is not a nice-to-have feature for mature organizations. It is the metric layer that determines whether your LLM serving infrastructure is financially sustainable at scale or whether you are hemorrhaging money on underutilized hardware.</p>
 
     <p>The fundamental cost metric for LLM inference is cost-per-token. The calculation is straightforward in principle: take your total GPU cost per hour, divide by the number of tokens generated per hour, and you get the marginal cost of producing each token. This number should be tracked continuously and broken down by model, by LoRA adapter, and by request type to identify where your GPU dollars are going and where they are being wasted.</p>
 
-    <pre><code># Cost-per-million-tokens calculation
-# Assume $35/hr per H100 GPU, 8 GPUs in cluster
-# GPU cost per second
-gpu_cost_per_second = 8 * 35 / 3600  # $0.0778/second
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label python">cost-per-token calculation</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code><span class="syn-comment"># Cost-per-million-tokens calculation</span>
+<span class="syn-comment"># Assume $35/hr per H100 GPU, 8 GPUs in cluster</span>
+<span class="syn-comment"># GPU cost per second</span>
+<span class="syn-field">gpu_cost_per_second</span> <span class="syn-op">=</span> <span class="syn-num">8</span> <span class="syn-op">*</span> <span class="syn-num">35</span> <span class="syn-op">/</span> <span class="syn-num">3600</span>  <span class="syn-comment"># $0.0778/second</span>
 
-# Tokens generated per second (from Prometheus)
-# sum(rate(vllm_tokens_generated_total[5m]))
-# Example: 2,400 tokens/second
+<span class="syn-comment"># Tokens generated per second (from Prometheus)</span>
+<span class="syn-comment"># sum(rate(vllm_tokens_generated_total[5m]))</span>
+<span class="syn-comment"># Example: 2,400 tokens/second</span>
 
-# Cost per million tokens
-# ($0.0778 / 2400) * 1,000,000 = $32.41 per million tokens</code></pre>
+<span class="syn-comment"># Cost per million tokens</span>
+<span class="syn-comment"># ($0.0778 / 2400) * 1,000,000 = $32.41 per million tokens</span></code></pre>
+    </div>
 
     <p>The transformative impact of cache-aware routing, and the core economic argument for llm-d's existence, becomes quantifiable through cost observability. When a request hits the KV cache, it skips the prefill phase entirely. Prefill is the most compute-intensive part of inference, often consuming 10-50x more GPU cycles per token than the decode phase. By routing requests to pods that have already cached their prefix, llm-d eliminates redundant prefill computation, which directly reduces the number of GPU-seconds consumed per request, which directly reduces cost-per-token.</p>
 
@@ -632,7 +1318,93 @@ gpu_cost_per_second = 8 * 35 / 3600  # $0.0778/second
       <strong>Cost Impact:</strong> In production llm-d deployments with high prompt reuse patterns, cache-aware routing typically reduces cost-per-token by 30-50% compared to naive round-robin load balancing. For a cluster spending $100K/month on GPU compute, that represents $30K-$50K in monthly savings from routing intelligence alone.
     </div>
 
-    <h2>Production Dashboard Design Patterns</h2>
+    <h2 id="section-12"><span class="section-num">12</span> Grafana Dashboard JSON</h2>
+
+    <p>Rather than building panels from scratch, you can import dashboard JSON directly into Grafana. The following snippet defines a TTFT panel that you can paste into any Grafana dashboard's JSON model. It includes the three key percentile queries (p50, p95, p99), appropriate color thresholds, and the time series visualization configuration.</p>
+
+    <p>To use it: open your Grafana dashboard, click the gear icon, select "JSON Model," and add this panel definition to the <code>panels</code> array. Adjust the <code>gridPos</code> values to position it where you want.</p>
+
+    <div class="code-block">
+      <div class="code-block-header">
+        <span class="code-file-label json">grafana-ttft-panel.json</span>
+        <button class="copy-btn" onclick="copyCode(this)"><svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy</button>
+      </div>
+      <pre><code>{
+  <span class="syn-key">"id"</span>: <span class="syn-num">1</span>,
+  <span class="syn-key">"type"</span>: <span class="syn-str">"timeseries"</span>,
+  <span class="syn-key">"title"</span>: <span class="syn-str">"Time-to-First-Token (TTFT)"</span>,
+  <span class="syn-key">"description"</span>: <span class="syn-str">"P50, P95, P99 TTFT across all inference pods"</span>,
+  <span class="syn-key">"gridPos"</span>: { <span class="syn-key">"h"</span>: <span class="syn-num">8</span>, <span class="syn-key">"w"</span>: <span class="syn-num">12</span>, <span class="syn-key">"x"</span>: <span class="syn-num">0</span>, <span class="syn-key">"y"</span>: <span class="syn-num">0</span> },
+  <span class="syn-key">"datasource"</span>: { <span class="syn-key">"type"</span>: <span class="syn-str">"prometheus"</span>, <span class="syn-key">"uid"</span>: <span class="syn-str">"${DS_PROMETHEUS}"</span> },
+  <span class="syn-key">"targets"</span>: [
+    {
+      <span class="syn-key">"refId"</span>: <span class="syn-str">"A"</span>,
+      <span class="syn-key">"expr"</span>: <span class="syn-str">"histogram_quantile(0.50, rate(vllm_request_ttft_seconds_bucket[5m]))"</span>,
+      <span class="syn-key">"legendFormat"</span>: <span class="syn-str">"p50"</span>
+    },
+    {
+      <span class="syn-key">"refId"</span>: <span class="syn-str">"B"</span>,
+      <span class="syn-key">"expr"</span>: <span class="syn-str">"histogram_quantile(0.95, rate(vllm_request_ttft_seconds_bucket[5m]))"</span>,
+      <span class="syn-key">"legendFormat"</span>: <span class="syn-str">"p95"</span>
+    },
+    {
+      <span class="syn-key">"refId"</span>: <span class="syn-str">"C"</span>,
+      <span class="syn-key">"expr"</span>: <span class="syn-str">"histogram_quantile(0.99, rate(vllm_request_ttft_seconds_bucket[5m]))"</span>,
+      <span class="syn-key">"legendFormat"</span>: <span class="syn-str">"p99"</span>
+    }
+  ],
+  <span class="syn-key">"fieldConfig"</span>: {
+    <span class="syn-key">"defaults"</span>: {
+      <span class="syn-key">"unit"</span>: <span class="syn-str">"s"</span>,
+      <span class="syn-key">"thresholds"</span>: {
+        <span class="syn-key">"mode"</span>: <span class="syn-str">"absolute"</span>,
+        <span class="syn-key">"steps"</span>: [
+          { <span class="syn-key">"color"</span>: <span class="syn-str">"green"</span>, <span class="syn-key">"value"</span>: <span class="syn-num">null</span> },
+          { <span class="syn-key">"color"</span>: <span class="syn-str">"yellow"</span>, <span class="syn-key">"value"</span>: <span class="syn-num">3</span> },
+          { <span class="syn-key">"color"</span>: <span class="syn-str">"red"</span>, <span class="syn-key">"value"</span>: <span class="syn-num">5</span> }
+        ]
+      },
+      <span class="syn-key">"custom"</span>: {
+        <span class="syn-key">"lineWidth"</span>: <span class="syn-num">2</span>,
+        <span class="syn-key">"fillOpacity"</span>: <span class="syn-num">10</span>,
+        <span class="syn-key">"gradientMode"</span>: <span class="syn-str">"scheme"</span>,
+        <span class="syn-key">"showPoints"</span>: <span class="syn-str">"never"</span>,
+        <span class="syn-key">"spanNulls"</span>: <span class="syn-bool">true</span>
+      }
+    },
+    <span class="syn-key">"overrides"</span>: [
+      {
+        <span class="syn-key">"matcher"</span>: { <span class="syn-key">"id"</span>: <span class="syn-str">"byName"</span>, <span class="syn-key">"options"</span>: <span class="syn-str">"p50"</span> },
+        <span class="syn-key">"properties"</span>: [
+          { <span class="syn-key">"id"</span>: <span class="syn-str">"color"</span>, <span class="syn-key">"value"</span>: { <span class="syn-key">"fixedColor"</span>: <span class="syn-str">"#73BF69"</span>, <span class="syn-key">"mode"</span>: <span class="syn-str">"fixed"</span> } }
+        ]
+      },
+      {
+        <span class="syn-key">"matcher"</span>: { <span class="syn-key">"id"</span>: <span class="syn-str">"byName"</span>, <span class="syn-key">"options"</span>: <span class="syn-str">"p95"</span> },
+        <span class="syn-key">"properties"</span>: [
+          { <span class="syn-key">"id"</span>: <span class="syn-str">"color"</span>, <span class="syn-key">"value"</span>: { <span class="syn-key">"fixedColor"</span>: <span class="syn-str">"#FADE2A"</span>, <span class="syn-key">"mode"</span>: <span class="syn-str">"fixed"</span> } }
+        ]
+      },
+      {
+        <span class="syn-key">"matcher"</span>: { <span class="syn-key">"id"</span>: <span class="syn-str">"byName"</span>, <span class="syn-key">"options"</span>: <span class="syn-str">"p99"</span> },
+        <span class="syn-key">"properties"</span>: [
+          { <span class="syn-key">"id"</span>: <span class="syn-str">"color"</span>, <span class="syn-key">"value"</span>: { <span class="syn-key">"fixedColor"</span>: <span class="syn-str">"#F2495C"</span>, <span class="syn-key">"mode"</span>: <span class="syn-str">"fixed"</span> } }
+        ]
+      }
+    ]
+  },
+  <span class="syn-key">"options"</span>: {
+    <span class="syn-key">"tooltip"</span>: { <span class="syn-key">"mode"</span>: <span class="syn-str">"multi"</span>, <span class="syn-key">"sort"</span>: <span class="syn-str">"desc"</span> },
+    <span class="syn-key">"legend"</span>: { <span class="syn-key">"displayMode"</span>: <span class="syn-str">"table"</span>, <span class="syn-key">"placement"</span>: <span class="syn-str">"bottom"</span>, <span class="syn-key">"calcs"</span>: [<span class="syn-str">"mean"</span>, <span class="syn-str">"max"</span>] }
+  }
+}</code></pre>
+    </div>
+
+    <div class="callout">
+      <strong>Import Tip:</strong> To import the full dashboard, wrap this panel in a dashboard envelope: <code>{"dashboard": {"title": "llm-d Inference Overview", "panels": [ ... ]}}</code>. You can also use the Grafana HTTP API: <code>POST /api/dashboards/db</code> with the JSON body. The <code>${DS_PROMETHEUS}</code> variable will resolve automatically if you have a Prometheus data source configured.
+    </div>
+
+    <h2 id="section-13"><span class="section-num">13</span> Production Dashboard Design Patterns</h2>
 
     <p>Building dashboards is easy. Building dashboards that people actually look at during a 2am incident and can parse in seconds under stress is a fundamentally different challenge. The difference lies in applying established design patterns that account for how humans process visual information when they are tired, stressed, and under time pressure. When your cluster is actively degrading and users are complaining, the on-call engineer needs to understand the situation in seconds, not minutes spent scrolling through fifty undifferentiated panels.</p>
 
@@ -665,7 +1437,7 @@ gpu_cost_per_second = 8 * 35 / 3600  # $0.0778/second
       <strong>Design Principle:</strong> Every panel on your dashboard should answer exactly one question. If you cannot state the question a panel answers in a single sentence, the panel is trying to do too much. Split it into focused sub-panels or move secondary information to a drill-down dashboard one level deeper in the hierarchy.
     </div>
 
-    <h2>Bringing It All Together</h2>
+    <h2 id="section-14"><span class="section-num">14</span> Bringing It All Together</h2>
 
     <p>LLM inference observability is not a solved problem that you can address by installing a Helm chart and walking away. It requires understanding the unique computational characteristics of autoregressive token generation, the cascading failure modes of KV cache management under memory pressure, the cost dynamics of GPU compute at scale, and the topology constraints of modern multi-GPU servers. Standard Kubernetes monitoring will not save you. It will actively mislead you by reporting healthy dashboards while your users experience multi-second latencies caused by problems that your monitoring stack cannot even represent.</p>
 
@@ -681,6 +1453,34 @@ gpu_cost_per_second = 8 * 35 / 3600  # $0.0778/second
     <a href="../">Open Interactive Dashboard &rarr;</a>
   </div>
 
-</div>
+  </div><!-- .main-content -->
+
+</div><!-- .page-layout -->
+
+<script>
+// Reading progress bar
+window.addEventListener('scroll', function() {
+  var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  var scrolled = (window.scrollY / docHeight) * 100;
+  document.getElementById('readingProgress').style.width = scrolled + '%';
+});
+
+// Copy button functionality
+function copyCode(btn) {
+  var codeBlock = btn.closest('.code-block');
+  var code = codeBlock.querySelector('code');
+  var text = code.innerText || code.textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg> Copied';
+    btn.style.color = '#4ade80';
+    btn.style.borderColor = '#4ade80';
+    setTimeout(function() {
+      btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25zM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z"/></svg> Copy';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  });
+}
+</script>
 </body>
 </html>
